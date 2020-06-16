@@ -16,7 +16,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: recursive 
+        submodules: recursive
+        fetch-depth: 0
     - name: Install Dependencies
       run: |
           sudo apt-get install  autoconf automake autotools-dev bc bison \

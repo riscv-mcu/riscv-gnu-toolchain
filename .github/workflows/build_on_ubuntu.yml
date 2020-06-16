@@ -62,11 +62,14 @@ jobs:
           do
           strip -s $i
           done
+    - name: Archive Toolchain
+      run: |
+        tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2 ${{ env.PREFIX }}
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:
         # Artifact name
-        name: nuclei_gnu_prebuilt_elf_ubuntu
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}
         # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ env.PREFIX }}
+        path: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2
 

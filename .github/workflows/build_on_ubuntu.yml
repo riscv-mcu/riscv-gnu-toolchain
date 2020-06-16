@@ -33,18 +33,25 @@ jobs:
         export CXX=g++-7
         export CC=gcc-7
         make
-    - name: Check Toolchain
+#     - name: Check Toolchain
+#       run: |
+#         export MAKEFLAGS="-j4"
+#         export CXX=g++-7
+#         export CC=gcc-7
+#         scripts/wrapper/make_tail check
+#     - name: Report Toolchain
+#       run: |
+#         export MAKEFLAGS="-j4"
+#         export CXX=g++-7
+#         export CC=gcc-7
+#         make report
+    - name: Strip Toolchain
       run: |
-        export MAKEFLAGS="-j4"
-        export CXX=g++-7
-        export CC=gcc-7
-        scripts/wrapper/make_tail check
-    - name: Report Toolchain
-      run: |
-        export MAKEFLAGS="-j4"
-        export CXX=g++-7
-        export CC=gcc-7
-        make report
+          cd $PREFIX
+          for i in `find libexec bin -type f`
+          do
+          strip -s $i
+          done
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:

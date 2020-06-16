@@ -26,38 +26,41 @@ jobs:
     - name: Configure
       run: ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
     - name: Change toolchain name to Nuclei
-      run: sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
-    - name: Build Toolchain
       run: |
-        export MAKEFLAGS="-j4"
-        export CXX=g++-7
-        export CC=gcc-7
-        make
-#     - name: Check Toolchain
+        sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+        mkdir $PREFIX
+        touch $PREFIX/hello
+#     - name: Build Toolchain
 #       run: |
 #         export MAKEFLAGS="-j4"
 #         export CXX=g++-7
 #         export CC=gcc-7
-#         scripts/wrapper/make_tail check
-#     - name: Report Toolchain
+#         make
+# #     - name: Check Toolchain
+# #       run: |
+# #         export MAKEFLAGS="-j4"
+# #         export CXX=g++-7
+# #         export CC=gcc-7
+# #         scripts/wrapper/make_tail check
+# #     - name: Report Toolchain
+# #       run: |
+# #         export MAKEFLAGS="-j4"
+# #         export CXX=g++-7
+# #         export CC=gcc-7
+# #         make report
+#     - name: Strip Toolchain
 #       run: |
-#         export MAKEFLAGS="-j4"
-#         export CXX=g++-7
-#         export CC=gcc-7
-#         make report
-    - name: Strip Toolchain
-      run: |
-          cd $PREFIX
-          set +e
-          for i in `find libexec bin -type f`
-          do
-          strip -s $i
-          done
+#           cd $PREFIX
+#           set +e
+#           for i in `find libexec bin -type f`
+#           do
+#           strip -s $i
+#           done
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:
         # Artifact name
         name: nuclei_gnu_prebuilt_elf_ubuntu
         # A file, directory or wildcard pattern that describes what to upload
-        path: $PREFIX
+        path: ${{ env.PREFIX }}
 

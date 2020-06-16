@@ -22,13 +22,13 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - name: Install Dependencies on ${{ matrix.os }}
+    - name: Install Dependencies on Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
           sudo apt-get install  autoconf automake autotools-dev bc bison \
           build-essential curl dejagnu expect flex gawk gperf libgmp-dev \
           libmpc-dev libmpfr-dev libtool patchutils texinfo gcc-7 g++-7
-    - name: Install Dependencies on ${{ matrix.os }}
+    - name: Install Dependencies on macOS
       if: startsWith(matrix.os, 'macOS')
       run: |
           brew update

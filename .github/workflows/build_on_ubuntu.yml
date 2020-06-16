@@ -48,6 +48,7 @@ jobs:
     - name: Strip Toolchain
       run: |
           cd $PREFIX
+          set +e
           for i in `find libexec bin -type f`
           do
           strip -s $i

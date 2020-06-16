@@ -7,7 +7,7 @@ on:
     branches: [ nuclei* ]
 
 jobs:
-  build:
+  build_linux_mac:
     name: Build RISC-V Toolchain on ${{ matrix.os }} 
 
     runs-on: ${{ matrix.os }}
@@ -15,7 +15,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, ubuntu-16.04, macOS-latest]
     env: 
-      PREFIX: /opt/riscv 
+      PREFIX: /opt/riscv
+      CC: gcc-8
+      CXX: g++-8
 
     steps:
     - uses: actions/checkout@v2
@@ -34,27 +36,22 @@ jobs:
           brew update
           brew install zlib expat gawk gnu-sed
     - name: Configure
-      run: ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
+      run: |
+        ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
     - name: Change toolchain name to Nuclei
       run: |
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
         export MAKEFLAGS="-j4"
-        export CXX=g++-7
-        export CC=gcc-7
         make
 #     - name: Check Toolchain
 #       run: |
 #         export MAKEFLAGS="-j4"
-#         export CXX=g++-7
-#         export CC=gcc-7
 #         scripts/wrapper/make_tail check
 #     - name: Report Toolchain
 #       run: |
 #         export MAKEFLAGS="-j4"
-#         export CXX=g++-7
-#         export CC=gcc-7
 #         make report
     - name: Strip Toolchain
       run: |

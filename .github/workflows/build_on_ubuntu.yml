@@ -8,54 +8,62 @@ on:
 
 jobs:
   build:
+    name: Build RISC-V Toolchain on ${{ matrix.os }} 
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ubuntu-16.04, macOS-latest]
     env: 
       PREFIX: /opt/riscv 
 
     steps:
     - uses: actions/checkout@v2
-#       with:
-#         submodules: recursive
-#         fetch-depth: 0
-    - name: Install Dependencies
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Install Dependencies on ${{ matrix.os }}
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
           sudo apt-get install  autoconf automake autotools-dev bc bison \
           build-essential curl dejagnu expect flex gawk gperf libgmp-dev \
           libmpc-dev libmpfr-dev libtool patchutils texinfo gcc-7 g++-7
+    - name: Install Dependencies on ${{ matrix.os }}
+      if: startsWith(matrix.os, 'macOS')
+      run: |
+          brew update
+          brew install zlib expat gawk gnu-sed
     - name: Configure
       run: ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
     - name: Change toolchain name to Nuclei
       run: |
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
-        mkdir $PREFIX
-        touch $PREFIX/hello
-#     - name: Build Toolchain
+    - name: Build Toolchain
+      run: |
+        export MAKEFLAGS="-j4"
+        export CXX=g++-7
+        export CC=gcc-7
+        make
+#     - name: Check Toolchain
 #       run: |
 #         export MAKEFLAGS="-j4"
 #         export CXX=g++-7
 #         export CC=gcc-7
-#         make
-# #     - name: Check Toolchain
-# #       run: |
-# #         export MAKEFLAGS="-j4"
-# #         export CXX=g++-7
-# #         export CC=gcc-7
-# #         scripts/wrapper/make_tail check
-# #     - name: Report Toolchain
-# #       run: |
-# #         export MAKEFLAGS="-j4"
-# #         export CXX=g++-7
-# #         export CC=gcc-7
-# #         make report
-#     - name: Strip Toolchain
+#         scripts/wrapper/make_tail check
+#     - name: Report Toolchain
 #       run: |
-#           cd $PREFIX
-#           set +e
-#           for i in `find libexec bin -type f`
-#           do
-#           strip -s $i
-#           done
+#         export MAKEFLAGS="-j4"
+#         export CXX=g++-7
+#         export CC=gcc-7
+#         make report
+    - name: Strip Toolchain
+      run: |
+          cd $PREFIX
+          set +e
+          for i in `find libexec bin -type f`
+          do
+          strip -s $i
+          done
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:

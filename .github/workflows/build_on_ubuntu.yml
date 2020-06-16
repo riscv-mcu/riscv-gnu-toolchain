@@ -1,0 +1,38 @@
+name: Build Nuclei RISC-V GNU Toolchain
+
+on:
+  push:
+    branches: [ nuclei* ]
+  pull_request:
+    branches: [ nuclei* ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    env: 
+      PREFIX: /opt/riscv 
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Dependencies
+      run: |
+          sudo apt-get install  autoconf automake autotools-dev bc bison \
+          build-essential curl dejagnu expect flex gawk gperf libgmp-dev \
+          libmpc-dev libmpfr-dev libtool patchutils texinfo gcc-7 g++-7
+    - name: Configure
+      run: ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
+    - name: Change toolchain name to Nuclei
+      run: sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+    - name: Build Toolchain
+      run: |
+        export MAKEFLAGS="-j4"
+        export CXX=g++-7
+        export CC=gcc-7
+        make
+    - name: Report Toolchain
+      run: |
+        export MAKEFLAGS="-j4"
+        export CXX=g++-7
+        export CC=gcc-7
+        make report

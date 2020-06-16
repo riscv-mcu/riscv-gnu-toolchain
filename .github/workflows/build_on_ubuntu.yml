@@ -1,4 +1,4 @@
-name: Build Nuclei RISC-V GNU Toolchain
+name: Build Nuclei Baremetal RISC-V GNU Toolchain
 
 on:
   push:
@@ -39,3 +39,11 @@ jobs:
         export CXX=g++-7
         export CC=gcc-7
         make report
+    - name: Upload built toolchain artifact
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: nuclei_gnu_prebuilt_elf_ubuntu
+        # A file, directory or wildcard pattern that describes what to upload
+        path: $PREFIX
+

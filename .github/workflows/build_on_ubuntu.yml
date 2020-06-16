@@ -54,6 +54,7 @@ jobs:
 #         export MAKEFLAGS="-j4"
 #         make report
     - name: Strip Toolchain
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
           cd $PREFIX
           set +e

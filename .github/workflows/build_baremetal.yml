@@ -9,7 +9,6 @@ on:
 jobs:
   build_linux_mac:
     name: Build RISC-V Toolchain For ${{ matrix.os }} 
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -75,7 +74,9 @@ jobs:
         path: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2
 
   build_windows:
+    needs: [build_linux_mac]
     name: Build RISC-V Toolchain for Windows
+
     runs-on: ubuntu-16.04
     env: 
       PREFIX: /opt/riscv_windows

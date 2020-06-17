@@ -63,7 +63,6 @@ jobs:
           done
     - name: Archive Toolchain
       run: |
-        cd ${{ env.PREFIX }}/..
         tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2 ${{ env.PREFIX }}
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
@@ -130,7 +129,6 @@ jobs:
           done
     - name: Archive Toolchain
       run: |
-        cd ${{ env.PREFIX }}/..
         tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.tar.bz2 ${{ env.PREFIX }}
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2

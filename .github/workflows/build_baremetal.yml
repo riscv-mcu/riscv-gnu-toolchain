@@ -99,7 +99,7 @@ jobs:
         PREBUILT_RISCV_GCC=$(readlink -f $(find . -type d -name bin | grep -v "elf"))
         cd ..
         ls prebuilt_riscv_gcc
-        export PATH=$PREBUILT_RISCV_GCC:$PATH
+        echo "export PATH=$PREBUILT_RISCV_GCC:\$PATH" > setup_gcc.sh
     - name: Install Dependencies on Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
@@ -113,6 +113,7 @@ jobs:
     - name: Build Toolchain
       run: |
         export MAKEFLAGS="-j4"
+        source setup_gcc.sh
         make
     - name: Strip Toolchain
       run: |

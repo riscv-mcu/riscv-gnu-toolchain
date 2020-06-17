@@ -117,7 +117,7 @@ jobs:
     - name: Strip Toolchain
       run: |
           cd $PREFIX
-          cp /usr/i686-w64-mingw32/bin/*.dll bin/ -v
+          cp /usr/i686-w64-mingw32/bin/*.dll bin/
           set +e
           for i in `find . -name *.dll`
           do

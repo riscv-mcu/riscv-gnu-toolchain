@@ -97,7 +97,6 @@ jobs:
         tar -xjf ../*.tar.bz2
         PREBUILT_RISCV_GCC=$(readlink -f $(find . -type d -name bin | grep -v "elf"))
         cd ..
-        ls $PREBUILT_RISCV_GCC
         echo "export PATH=$PREBUILT_RISCV_GCC:\$PATH" > setup_gcc.sh
         cat setup_gcc.sh
     - name: Install Dependencies on Ubuntu

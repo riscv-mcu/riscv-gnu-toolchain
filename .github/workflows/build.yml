@@ -36,7 +36,7 @@ jobs:
           brew install zlib expat gawk gnu-sed
     - name: Configure
       run: |
-        ./configure --with-arch=rv64gc --with-abi=lp64d --enable-multilib --with-cmodel=medany
+        ./configure --prefix=$PREFIX --with-arch=rv64gc --with-abi=lp64d --enable-multilib --with-cmodel=medany
     - name: Change toolchain name to Nuclei
       run: |
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile

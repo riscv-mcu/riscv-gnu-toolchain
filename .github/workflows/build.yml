@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_glibc_linux_mac:
-    name: Build RISC-V Toolchain For ${{ matrix.os }} 
+    name: Build glibc toolchain For ${{ matrix.os }} 
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -65,7 +65,7 @@ jobs:
         path: nuclei_riscv_gnu_toolchain_prebuilt_glibc_${{ matrix.os }}.tar.bz2
   
   build_bare_linux_mac:
-    name: Build RISC-V Toolchain For ${{ matrix.os }} 
+    name: Build baremetal toolchain For ${{ matrix.os }} 
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -131,7 +131,7 @@ jobs:
 
   build_bare_windows:
     needs: [build_bare_linux_mac]
-    name: Build RISC-V Toolchain for Windows
+    name: Build baremetal toolchain for Windows
 
     runs-on: ubuntu-16.04
     env: 

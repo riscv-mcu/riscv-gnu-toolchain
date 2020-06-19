@@ -133,7 +133,7 @@ jobs:
     needs: [build_bare_linux_mac]
     name: Build baremetal toolchain for Windows
 
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     env: 
       PREFIX: /opt/riscv_windows
 
@@ -146,7 +146,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         # Artifact name
-        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-16.04
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-latest
     - name: Extract prebuilt ubuntu toolchain
       run: |
         mkdir prebuilt_riscv_gcc

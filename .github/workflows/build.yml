@@ -161,7 +161,7 @@ jobs:
       run: |
           sudo apt-get install autoconf automake autotools-dev bc bison \
           build-essential curl dejagnu expect flex gawk gperf libgmp-dev \
-          libmpc-dev libmpfr-dev libtool patchutils texinfo expat libexpat1-dev\
+          libmpc-dev libmpfr-dev libtool patchutils texinfo expat libexpat1-dev \
           binutils-mingw-w64-i686 g++-mingw-w64-i686 gcc-mingw-w64-i686
     - name: Configure
       run: |

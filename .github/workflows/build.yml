@@ -161,9 +161,9 @@ jobs:
       run: |
           sudo apt-get install autoconf automake autotools-dev bc bison \
           build-essential curl dejagnu expect flex gawk gperf libgmp-dev \
-          libmpc-dev libmpfr-dev libtool patchutils texinfo expat libexpat1 libexpat1-dev \
+          libmpc-dev libmpfr-dev libtool patchutils texinfo expat libexpat1 zlib1g-dev libexpat-dev \
           binutils-mingw-w64-i686 g++-mingw-w64-i686 gcc-mingw-w64-i686 mingw-w64-i686-dev \
-          mingw-w64 mingw-w64-tools gdb-mingw-w64
+          mingw-w64 mingw-w64-tools gdb-mingw-w64 python3
     - name: Configure
       run: |
         ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany

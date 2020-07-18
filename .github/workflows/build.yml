@@ -149,7 +149,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         # Artifact name
-        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-latest
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-16.04
 #     - name: Download a prebuilt toolchain
 #       run: |
 #         wget https://nucleisys.com/upload/file/2019/12/toolchain/gcc/rv_linux_bare_9.21_centos64.tar.bz2

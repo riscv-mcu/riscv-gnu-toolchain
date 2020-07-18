@@ -136,7 +136,7 @@ jobs:
     needs: [build_bare_linux_mac]
     name: Build baremetal toolchain for Windows
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-16.04
     env: 
       PREFIX: /opt/riscv_windows
 

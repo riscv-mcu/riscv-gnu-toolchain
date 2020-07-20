@@ -191,7 +191,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKEFLAGS="-j1"
+        export MAKEFLAGS="-j4"
         source setup_gcc.sh
         make
     - name: Strip Toolchain

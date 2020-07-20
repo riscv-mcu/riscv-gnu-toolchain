@@ -1,0 +1,233 @@
+name: Build GNU Toolchain
+
+on:
+  push:
+    branches: [ nuclei* ]
+  pull_request:
+    branches: [ nuclei* ]
+
+jobs:
+  build_glibc_linux_mac:
+    name: glibc for ${{ matrix.os }} 
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-16.04]
+    env: 
+      PREFIX: /opt/riscv
+      CC: gcc-8
+      CXX: g++-8
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    
+    - name: Tarball source
+      run: |
+        base=$(basename $PWD)
+        cd ..
+        tar czvf source.tar.gz --exclude-vcs -C $base .
+        mv source.tar.gz $base/
+    
+    - name: Upload source
+      uses: actions/upload-artifact@v2.2.0
+      with:
+        name: riscv_gnu_toochain_source
+        path: source.tar.gz
+      # continue build on error
+      continue-on-error: true
+    
+    - name: Install Dependencies on Ubuntu
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          sudo apt-get install autoconf automake autotools-dev bc bison \
+          build-essential curl dejagnu expect flex gawk gperf libtool patchutils texinfo
+    - name: Install Dependencies on macOS
+      if: startsWith(matrix.os, 'macOS')
+      run: |
+          brew update
+          brew install zlib expat gawk gnu-sed
+    - name: Configure
+      run: |
+        ./configure --prefix=$PREFIX --with-arch=rv64gc --with-abi=lp64d --enable-multilib --with-cmodel=medany
+        cd ./riscv-gcc/ && ./contrib/download_prerequisites
+        cd -
+    - name: Change toolchain name to Nuclei
+      run: |
+        sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+    - name: Build Toolchain
+      run: |
+        export MAKE="make -j4"
+        make linux
+    - name: Strip Toolchain
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          cd $PREFIX
+          set +e
+          for i in `find libexec bin -type f`
+          do
+          strip -s $i
+          done
+    - name: Archive Toolchain
+      run: |
+        tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_glibc_${{ matrix.os }}.tar.bz2 -C ${{ env.PREFIX }} .
+    - name: Upload built toolchain artifact
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: nuclei_riscv_gnu_toolchain_prebuilt_glibc_${{ matrix.os }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: nuclei_riscv_gnu_toolchain_prebuilt_glibc_${{ matrix.os }}.tar.bz2
+  
+  build_bare_linux_mac:
+    name: baremetal for ${{ matrix.os }} 
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+#         os: [ubuntu-latest]
+        os: [ubuntu-16.04, macos-10.15]
+    env: 
+      CC: gcc-8
+      CXX: g++-8
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Install Dependencies on Ubuntu
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          sudo apt-get install autoconf automake autotools-dev bc bison \
+          build-essential curl dejagnu expect flex gawk gperf libtool patchutils texinfo
+    - name: Install Dependencies on macOS
+      if: startsWith(matrix.os, 'macOS')
+      run: |
+          brew install zlib expat gawk gnu-sed
+    - name: Configure
+      run: |
+        PREFIX=${HOME}/riscv
+        ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
+        cd ./riscv-gcc/ && ./contrib/download_prerequisites
+        cd -
+    - name: Change toolchain name to Nuclei
+      run: |
+        sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+    - name: Build Toolchain
+      run: |
+        export MAKE="make -j4"
+        make
+    - name: Strip Toolchain
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          PREFIX=${HOME}/riscv
+          cd $PREFIX
+          set +e
+          for i in `find libexec bin -type f`
+          do
+          strip -s $i
+          done
+    - name: Archive Toolchain
+      run: |
+        PREFIX=${HOME}/riscv
+        tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2 -C $PREFIX .
+    - name: Upload built toolchain artifact
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2
+
+  build_bare_windows:
+    needs: [build_bare_linux_mac]
+    name: baremetal for Windows
+
+    runs-on: ubuntu-16.04
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2
+      with:
+        # Artifact name
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-16.04
+    - name: Extract prebuilt ubuntu toolchain
+      run: |
+        mkdir prebuilt_riscv_gcc
+        cd prebuilt_riscv_gcc
+        tar -xjf ../*.tar.bz2
+        PREBUILT_RISCV_GCC=$(readlink -f $(find . -type d -name bin | grep -v "elf"))
+        cd ..
+        rm -f *.tar.bz2
+        echo "export PATH=$PREBUILT_RISCV_GCC:\$PATH" > setup_gcc.sh
+        cat setup_gcc.sh
+    - name: Install Dependencies on Ubuntu
+      run: |
+          sudo apt-get install autoconf automake autotools-dev bc bison \
+          build-essential curl dejagnu expect flex gawk gperf \
+          libtool patchutils texinfo python3 zip \
+          mingw-w64 gdb-mingw-w64 libz-mingw-w64-dev
+    - name: Install third-parties libraries for Windows Build
+      run: |
+        mkdir 3rd_libs
+        cd 3rd_libs
+        echo "Download and compile expat"
+        wget https://github.com/libexpat/libexpat/releases/download/R_2_2_9/expat-2.2.9.tar.bz2
+        tar -xjf expat-2.2.9.tar.bz2
+        cd expat-2.2.9
+        ./configure --host=i686-w64-mingw32 --prefix=/usr/i686-w64-mingw32/
+        make -j4
+        sudo make install
+        # Remove dll dependencies such as zlib1.dll and libexpat-1.dll which can be checked using https://github.com/lucasg/Dependencies
+        for i in `find /usr/i686-w64-mingw32/ -name "*.dll"`; do sudo mv $i $i.bak;  done
+        [ -f /usr/x86_64-w64-mingw32/lib/zlib1.dll ] && sudo mv /usr/x86_64-w64-mingw32/lib/zlib1.dll /usr/x86_64-w64-mingw32/lib/zlib1.dll.bak
+        [ -f /usr/i686-w64-mingw32/lib/libexpat.dll.a ] && sudo mv /usr/i686-w64-mingw32/lib/libexpat.dll.a /usr/i686-w64-mingw32/lib/libexpat.dll.a.bak
+        [ -f /usr/i686-w64-mingw32/lib/libz.dll.a ] && sudo mv /usr/i686-w64-mingw32/lib/libz.dll.a /usr/i686-w64-mingw32/lib/libz.dll.a.bak
+        [ -f /usr/x86_64-w64-mingw32/lib/libz.dll.a ] && sudo mv /usr/x86_64-w64-mingw32/lib/libz.dll.a /usr/x86_64-w64-mingw32/lib/libz.dll.a.bak
+    - name: Configure
+      run: |
+        PREFIX=${HOME}/riscv
+        ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
+        cd ./riscv-gcc/ && ./contrib/download_prerequisites
+        cd -
+    - name: Change toolchain name to Nuclei
+      run: |
+        sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+    - name: Build Toolchain
+      run: |
+        export MAKE="make -j4"
+        source setup_gcc.sh
+        make
+    - name: Strip Toolchain
+      run: |
+          PREFIX=${HOME}/riscv
+          cd $PREFIX
+          set +e
+          for i in `find . -name *.dll`
+          do
+          i686-w64-mingw32-strip -s $i
+          done
+          for i in `find . -name *.exe`
+          do
+          i686-w64-mingw32-strip -s $i
+          done
+    - name: Archive Toolchain
+      run: |
+        PREFIX=${HOME}/riscv
+        WORKPWD=$(pwd)
+        cd $PREFIX
+        zip -9 -q -r ${WORKPWD}/nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip .
+        cd ${WORKPWD}
+    - name: Upload built toolchain artifact
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_windows
+        # A file, directory or wildcard pattern that describes what to upload
+        path: nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip

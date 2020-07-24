@@ -169,7 +169,7 @@ jobs:
           build-essential curl dejagnu expect flex gawk gperf \
           libtool patchutils texinfo expat libexpat1 zlib1g-dev libexpat-dev \
           binutils-mingw-w64-i686 g++-mingw-w64-i686 gcc-mingw-w64-i686 mingw-w64-i686-dev \
-          mingw-w64 mingw-w64-tools gdb-mingw-w64 python3 libz-mingw-w64-dev
+          mingw-w64 mingw-w64-tools gdb-mingw-w64 python3 libz-mingw-w64-dev zip
     - name: Install third-parties libraries for Windows Build
       run: |
         mkdir 3rd_libs
@@ -214,7 +214,8 @@ jobs:
         PREFIX=${HOME}/riscv
         cd $PREFIX
         zip -9 -q -r ../nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip .
-        cd -
+        cd ${HOME}
+        ls -lh .
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:

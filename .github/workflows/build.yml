@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_glibc_linux_mac:
-    name: Build glibc toolchain For ${{ matrix.os }} 
+    name: glibc for ${{ matrix.os }} 
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -66,7 +66,7 @@ jobs:
         path: nuclei_riscv_gnu_toolchain_prebuilt_glibc_${{ matrix.os }}.tar.bz2
   
   build_bare_linux_mac:
-    name: Build baremetal toolchain For ${{ matrix.os }} 
+    name: baremetal for ${{ matrix.os }} 
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -136,7 +136,7 @@ jobs:
 
   build_bare_windows:
     needs: [build_bare_linux_mac]
-    name: Build baremetal toolchain for Windows
+    name: baremetal for Windows
 
     runs-on: ubuntu-16.04
 
@@ -212,9 +212,10 @@ jobs:
     - name: Archive Toolchain
       run: |
         PREFIX=${HOME}/riscv
+        WORKPWD=$(pwd)
         cd $PREFIX
-        zip -9 -q -r ../nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip .
-        cd ${HOME}
+        zip -9 -q -r $(WORKPWD)/nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip .
+        cd ${WORKPWD}
         ls -lh .
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2

@@ -7,6 +7,10 @@ This is the RISC-V C and C++ cross-compiler. It supports two build modes:
 a generic ELF/Newlib toolchain and a more sophisticated Linux-ELF/glibc
 toolchain.
 
+> If you are looking for how to build toolchain for Nuclei RISC-V Processor, please check [Build RISC-V GNU Toolchain For Nuclei](Build_Nuclei.md)
+> ![Build Nuclei GNU Toolchain](https://github.com/riscv-mcu/riscv-gnu-toolchain/workflows/Build%20GNU%20Toolchain/badge.svg)
+
+
 ###  Getting the sources
 
 This repository uses submodules. You need the --recursive option to fetch the submodules automatically

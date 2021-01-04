@@ -72,7 +72,7 @@ Assumed your toolchain source code located in `~/riscv-gnu-toolchain`, and you w
    cd ~/riscv-gnu-toolchain
    export PREFIX=${HOME}/riscv_lin
    # Configure linux newlibc x64 build and enable multilib
-   ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
+   ./configure --enable-multilib --prefix=$PREFIX --with-cmodel=medany
    # Download extra prerequisites(GMP, MPFR and MPC libraries)
    # see https://gcc.gnu.org/install/download.html
    cd ./riscv-gcc/ && ./contrib/download_prerequisites
@@ -107,7 +107,7 @@ If you want to build for **linux glibc toolchain**, you can replace the **step 1
 cd ~/riscv-gnu-toolchain
 export PREFIX=${HOME}/riscv_glibc_lin
 # Configure linux glibc x64 build and enable multilib
-./configure --prefix=$PREFIX --with-arch=rv64gc --with-abi=lp64d --enable-multilib --with-cmodel=medany
+./configure --prefix=$PREFIX --enable-multilib --with-cmodel=medany
 # Download extra prerequisites(GMP, MPFR and MPC libraries)
 # see https://gcc.gnu.org/install/download.html
 cd ./riscv-gcc/ && ./contrib/download_prerequisites
@@ -140,7 +140,7 @@ Assumed your toolchain source code located in `~/riscv-gnu-toolchain`, and you w
     cd ~/riscv-gnu-toolchain
     export PREFIX=${HOME}/riscv_win
     # Configure w32 newlibc build and enable multilib
-    ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
+    ./configure --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
     # Download extra prerequisites(GMP, MPFR and MPC libraries)
     # see https://gcc.gnu.org/install/download.html
     cd ./riscv-gcc/ && ./contrib/download_prerequisites

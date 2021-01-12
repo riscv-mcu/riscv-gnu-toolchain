@@ -713,7 +713,7 @@ stamps/build-dejagnu: $(srcdir)/riscv-dejagnu
 	date > $@
 
 stamps/check-gcc-newlib: stamps/build-gcc-newlib-stage2 stamps/build-qemu stamps/build-dejagnu
-	PATH="$(srcdir)/scripts/wrapper/qemu:$(INSTALL_DIR)/bin:$(PATH)" RISC_V_SYSROOT="$(SYSROOT)" $(MAKE) -C build-gcc-newlib-stage2 check-gcc "RUNTESTFLAGS=--target_board='$(NEWLIB_TARGET_BOARDS)'"
+	PATH="$(srcdir)/scripts/wrapper/qemu:$(INSTALL_DIR)/bin:$(PATH)" RISC_V_SYSROOT="$(SYSROOT)" $(MAKE) -C build-gcc-newlib-stage2 check-gcc "RUNTESTFLAGS=--target_board='$(NEWLIB_TARGET_BOARDS)' riscv.exp riscv-rvv.exp"
 	mkdir -p $(dir $@)
 	date > $@
 

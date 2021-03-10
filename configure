@@ -736,11 +736,11 @@ runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-infodir='${datarootdir}/info'
-htmldir='${docdir}'
-dvidir='${docdir}'
-pdfdir='${docdir}'
-psdir='${docdir}'
+infodir='${docdir}/info'
+htmldir='${docdir}/html'
+dvidir='${docdir}/dvi'
+pdfdir='${docdir}/pdf'
+psdir='${docdir}/ps'
 libdir='${exec_prefix}/lib'
 localedir='${datarootdir}/locale'
 mandir='${datarootdir}/man'
@@ -3608,6 +3608,14 @@ if test "x$with_linux_headers_src" != xdefault; then :
 
 else
   with_linux_headers_src="\$(srcdir)/linux-headers/include"
+
+fi
+
+# Check whether --docdir was given.
+if test "${docdir+set}" = set; then :
+  withval=$docdir;
+else
+  docdir=default
 
 fi
 

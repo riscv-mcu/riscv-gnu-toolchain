@@ -1,6 +1,7 @@
 srcdir := @abs_top_srcdir@
 builddir := @abs_top_builddir@
 INSTALL_DIR := @prefix@
+DOC_DIR := @docdir@
 
 GCC_SRCDIR := @with_gcc_src@
 BINUTILS_SRCDIR := @with_binutils_src@
@@ -406,9 +407,12 @@ stamps/build-binutils-newlib: $(BINUTILS_SRCDIR) stamps/check-write-permission
 		--disable-gdb \
 		--disable-sim \
 		--disable-libdecnumber \
-		--disable-readline
+		--disable-readline \
+		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+	$(MAKE) -C $(notdir $@) pdf
+	$(MAKE) -C $(notdir $@) install-pdf
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gdb-newlib: $(GDB_SRCDIR)
@@ -427,9 +431,12 @@ stamps/build-gdb-newlib: $(GDB_SRCDIR)
 		--disable-binutils \
 		--disable-ld \
 		--disable-gold \
-		--disable-gprof
+		--disable-gprof \
+		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+	$(MAKE) -C $(notdir $@) pdf
+	$(MAKE) -C $(notdir $@) install-pdf
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) stamps/build-binutils-newlib
@@ -460,9 +467,12 @@ stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) stamps/build-binutils-newlib
 		$(WITH_ARCH) \
 		$(WITH_TUNE) \
 		CFLAGS_FOR_TARGET="-Os $(CFLAGS_FOR_TARGET)" \
-		CXXFLAGS_FOR_TARGET="-Os $(CXXFLAGS_FOR_TARGET)"
+		CXXFLAGS_FOR_TARGET="-Os $(CXXFLAGS_FOR_TARGET)" \
+		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@) all-gcc
 	$(MAKE) -C $(notdir $@) install-gcc
+	$(MAKE) -C $(notdir $@) pdf
+	$(MAKE) -C $(notdir $@) install-pdf
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-newlib: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1
@@ -477,9 +487,12 @@ stamps/build-newlib: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1
 		--enable-newlib-io-c99-formats \
 		--enable-newlib-register-fini \
 		CFLAGS_FOR_TARGET="-O2 -D_POSIX_MODE $(CFLAGS_FOR_TARGET)" \
-		CXXFLAGS_FOR_TARGET="-O2 -D_POSIX_MODE $(CXXFLAGS_FOR_TARGET)"
+		CXXFLAGS_FOR_TARGET="-O2 -D_POSIX_MODE $(CXXFLAGS_FOR_TARGET)" \
+		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+	$(MAKE) -C $(notdir $@) pdf
+	$(MAKE) -C $(notdir $@) install-pdf
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-newlib-nano: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1

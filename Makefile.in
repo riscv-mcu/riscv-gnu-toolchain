@@ -56,6 +56,13 @@ ifneq ($(XLEN),32)
 	XLEN := 64
 endif
 
+GENPDF :=
+INSTALLPDF :=
+ifneq ($(DOC_DIR), /notgiven)
+	GENPDF := $(MAKE) -C $(notdir $@) pdf
+	INSTALLPDF := $(MAKE) -C $(notdir $@) install-pdf
+endif
+
 make_tuple = riscv$(1)-unknown-$(2)
 LINUX_TUPLE  ?= $(call make_tuple,$(XLEN),linux-gnu)
 NEWLIB_TUPLE ?= $(call make_tuple,$(XLEN),elf)
@@ -411,8 +418,10 @@ stamps/build-binutils-newlib: $(BINUTILS_SRCDIR) stamps/check-write-permission
 		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+ifneq ($(DOC_DIR), /notgiven)
 	$(MAKE) -C $(notdir $@) pdf
 	$(MAKE) -C $(notdir $@) install-pdf
+endif
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gdb-newlib: $(GDB_SRCDIR)
@@ -435,8 +444,10 @@ stamps/build-gdb-newlib: $(GDB_SRCDIR)
 		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+ifneq ($(DOC_DIR), /notgiven)
 	$(MAKE) -C $(notdir $@) pdf
 	$(MAKE) -C $(notdir $@) install-pdf
+endif
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) stamps/build-binutils-newlib
@@ -471,8 +482,10 @@ stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) stamps/build-binutils-newlib
 		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@) all-gcc
 	$(MAKE) -C $(notdir $@) install-gcc
+ifneq ($(DOC_DIR), /notgiven)
 	$(MAKE) -C $(notdir $@) pdf
 	$(MAKE) -C $(notdir $@) install-pdf
+endif
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-newlib: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1
@@ -491,8 +504,10 @@ stamps/build-newlib: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1
 		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+ifneq ($(DOC_DIR), /notgiven)
 	$(MAKE) -C $(notdir $@) pdf
 	$(MAKE) -C $(notdir $@) install-pdf
+endif
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-newlib-nano: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1

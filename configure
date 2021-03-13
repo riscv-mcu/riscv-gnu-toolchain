@@ -735,7 +735,7 @@ localstatedir='${prefix}/var'
 runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
-docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+docdir='/notgiven'
 infodir='${docdir}/info'
 htmldir='${docdir}/html'
 dvidir='${docdir}/dvi'
@@ -1130,7 +1130,7 @@ fi
 # Check all directory arguments for consistency.
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
-		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
+		oldincludedir infodir htmldir dvidir pdfdir psdir \
 		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
@@ -3612,10 +3612,10 @@ else
 fi
 
 # Check whether --docdir was given.
-if test "${docdir+set}" = set; then :
-  withval=$docdir;
+if test "x${docdir}" = xdefault; then :
+  docdir=${prefix}/share/doc/${PACKAGE_TARNAME}
 else
-  docdir=default
+  docdir=${docdir}
 
 fi
 

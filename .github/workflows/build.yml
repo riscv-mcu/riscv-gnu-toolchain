@@ -51,7 +51,7 @@ jobs:
           brew install zlib expat gawk gnu-sed
     - name: Configure
       run: |
-        ./configure --prefix=$PREFIX --with-arch=rv64gc --with-abi=lp64d --enable-multilib --with-cmodel=medany
+        ./configure --prefix=$PREFIX --enable-multilib --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
     - name: Change toolchain name to Nuclei
@@ -109,7 +109,7 @@ jobs:
     - name: Configure
       run: |
         PREFIX=${HOME}/riscv
-        ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-cmodel=medany
+        ./configure --enable-multilib --prefix=$PREFIX --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
     - name: Change toolchain name to Nuclei
@@ -193,7 +193,7 @@ jobs:
     - name: Configure
       run: |
         PREFIX=${HOME}/riscv
-        ./configure --with-arch=rv32gc --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
+        ./configure --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
     - name: Change toolchain name to Nuclei

@@ -343,6 +343,10 @@ stamps/build-gcc-linux-stage2: $(GCC_SRCDIR) $(addprefix stamps/build-glibc-linu
 		CXXFLAGS_FOR_TARGET="-O2 $(CXXFLAGS_FOR_TARGET)"
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+ifneq ($(DOC_DIR), /notgiven)
+	$(MAKE) -C $(notdir $@) pdf
+	$(MAKE) -C $(notdir $@) install-pdf
+endif
 	cp -a $(INSTALL_DIR)/$(LINUX_TUPLE)/lib* $(SYSROOT)
 	mkdir -p $(dir $@) && touch $@
 
@@ -482,10 +486,6 @@ stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) stamps/build-binutils-newlib
 		--pdfdir=$(DOC_DIR)
 	$(MAKE) -C $(notdir $@) all-gcc
 	$(MAKE) -C $(notdir $@) install-gcc
-ifneq ($(DOC_DIR), /notgiven)
-	$(MAKE) -C $(notdir $@) pdf
-	$(MAKE) -C $(notdir $@) install-pdf
-endif
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-newlib: $(NEWLIB_SRCDIR) stamps/build-gcc-newlib-stage1
@@ -589,6 +589,10 @@ stamps/build-gcc-newlib-stage2: $(GCC_SRCDIR) stamps/build-newlib \
 		CXXFLAGS_FOR_TARGET="-Os $(CXXFLAGS_FOR_TARGET)"
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+ifneq ($(DOC_DIR), /notgiven)
+	$(MAKE) -C $(notdir $@) pdf
+	$(MAKE) -C $(notdir $@) install-pdf
+endif
 	mkdir -p $(dir $@) && touch $@
 
 #

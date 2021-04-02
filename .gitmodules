@@ -18,4 +18,4 @@
 	url = ../riscv-binutils-gdb.git
 [submodule "qemu"]
 	path = qemu
-	url = ../../sifive/qemu.git
+	url = ../qemu.git

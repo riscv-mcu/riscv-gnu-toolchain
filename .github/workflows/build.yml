@@ -19,6 +19,8 @@ jobs:
       CXX: g++-8
 
     steps:
+    - name: Test GCC Version
+      run: gcc-8 -v
     - uses: actions/checkout@v2
       with:
         submodules: recursive

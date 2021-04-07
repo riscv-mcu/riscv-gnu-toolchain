@@ -15,12 +15,12 @@ jobs:
         os: [ubuntu-16.04]
     env: 
       PREFIX: /opt/riscv
-      CC: gcc-8
-      CXX: g++-8
+      CC: gcc-9
+      CXX: g++-9
 
     steps:
     - name: Test GCC Version
-      run: gcc-8 -v
+      run: gcc-9 -v
     - uses: actions/checkout@v2
       with:
         submodules: recursive

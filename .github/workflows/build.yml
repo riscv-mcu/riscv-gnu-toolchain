@@ -91,8 +91,8 @@ jobs:
 #         os: [ubuntu-latest]
         os: [ubuntu-16.04, macos-10.15]
     env: 
-      CC: gcc-8
-      CXX: g++-8
+      CC: gcc-9
+      CXX: g++-9
 
     steps:
     - uses: actions/checkout@v2

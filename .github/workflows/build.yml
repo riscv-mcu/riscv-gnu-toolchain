@@ -23,7 +23,7 @@ jobs:
       run: gcc-9 -v
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
         fetch-depth: 0
     
     - name: Tarball source
@@ -61,7 +61,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKE="make -j1"
+        export MAKE="make -j4"
         make linux
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
@@ -97,7 +97,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
         fetch-depth: 0
     - name: Install Dependencies on Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
@@ -119,7 +119,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKE="make -j1"
+        export MAKE="make -j4"
         make
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
@@ -152,7 +152,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
         fetch-depth: 0
     - name: Download a Build Artifact
       uses: actions/download-artifact@v2
@@ -184,7 +184,7 @@ jobs:
         tar -xjf expat-2.2.9.tar.bz2
         cd expat-2.2.9
         ./configure --host=i686-w64-mingw32 --prefix=/usr/i686-w64-mingw32/
-        make -j1
+        make -j4
         sudo make install
         # Remove dll dependencies such as zlib1.dll and libexpat-1.dll which can be checked using https://github.com/lucasg/Dependencies
         for i in `find /usr/i686-w64-mingw32/ -name "*.dll"`; do sudo mv $i $i.bak;  done
@@ -203,7 +203,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKE="make -j1"
+        export MAKE="make -j4"
         source setup_gcc.sh
         make
     - name: Strip Toolchain

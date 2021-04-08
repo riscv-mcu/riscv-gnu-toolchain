@@ -142,7 +142,7 @@ jobs:
         path: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2
 
   build_bare_linux_light:
-    name: baremetal for ${{ matrix.os }} 
+    name: baremetal for ${{ matrix.os }} light
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

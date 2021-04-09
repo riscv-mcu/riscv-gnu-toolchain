@@ -194,7 +194,7 @@ jobs:
         path: nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2
 
   build_bare_windows:
-    needs: [build_bare_linux_light]
+    needs: [build_bare_linux_mac]
     name: baremetal for Windows
     runs-on: ubuntu-16.04
     steps:
@@ -206,7 +206,7 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         # Artifact name
-        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_light_ubuntu-16.04
+        name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-16.04
     - name: Extract prebuilt ubuntu toolchain
       run: |
         mkdir prebuilt_riscv_gcc

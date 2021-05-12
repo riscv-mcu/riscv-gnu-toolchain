@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-16.04]
     env: 
-      PREFIX: /opt/riscv
+      PREFIX: ${{ github.workspace }}
       CC: gcc-8
       CXX: g++-8
 
@@ -92,6 +92,7 @@ jobs:
     env: 
       CC: gcc-8
       CXX: g++-8
+      PREFIX: ${{ github.workspace }}
 
     steps:
     - uses: actions/checkout@v2
@@ -110,7 +111,6 @@ jobs:
           brew install zlib expat gawk gnu-sed
     - name: Configure
       run: |
-        PREFIX=${HOME}/riscv
         ./configure --enable-multilib --prefix=$PREFIX --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
@@ -124,7 +124,6 @@ jobs:
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
       run: |
-          PREFIX=${HOME}/riscv
           cd $PREFIX
           set +e
           for i in `find libexec bin -type f`
@@ -133,7 +132,6 @@ jobs:
           done
     - name: Archive Toolchain
       run: |
-        PREFIX=${HOME}/riscv
         tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2 -C $PREFIX .
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
@@ -194,7 +192,6 @@ jobs:
         [ -f /usr/x86_64-w64-mingw32/lib/libz.dll.a ] && sudo mv /usr/x86_64-w64-mingw32/lib/libz.dll.a /usr/x86_64-w64-mingw32/lib/libz.dll.a.bak
     - name: Configure
       run: |
-        PREFIX=${HOME}/riscv
         ./configure --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
@@ -208,7 +205,6 @@ jobs:
         make
     - name: Strip Toolchain
       run: |
-          PREFIX=${HOME}/riscv
           cd $PREFIX
           set +e
           for i in `find . -name *.dll`
@@ -221,7 +217,6 @@ jobs:
           done
     - name: Archive Toolchain
       run: |
-        PREFIX=${HOME}/riscv
         WORKPWD=$(pwd)
         cd $PREFIX
         zip -9 -q -r ${WORKPWD}/nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip .

@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-16.04]
     env: 
-      PREFIX: ${{ github.workspace }}
+      PREFIX: ${{ github.workspace }}/riscv
       CC: gcc-8
       CXX: g++-8
 
@@ -60,7 +60,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKE="make -j4"
+        export MAKE="make -j"
         make linux
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
@@ -92,7 +92,7 @@ jobs:
     env: 
       CC: gcc-8
       CXX: g++-8
-      PREFIX: ${{ github.workspace }}
+      PREFIX: ${{ github.workspace }}/riscv
 
     steps:
     - uses: actions/checkout@v2
@@ -119,7 +119,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKE="make -j4"
+        export MAKE="make -j"
         make
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
@@ -146,6 +146,9 @@ jobs:
     name: baremetal for Windows
 
     runs-on: ubuntu-16.04
+    
+    env: 
+      PREFIX: ${{ github.workspace }}/riscv
 
     steps:
     - uses: actions/checkout@v2
@@ -200,7 +203,7 @@ jobs:
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
     - name: Build Toolchain
       run: |
-        export MAKE="make -j4"
+        export MAKE="make -j"
         source setup_gcc.sh
         make
     - name: Strip Toolchain

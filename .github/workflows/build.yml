@@ -8,6 +8,7 @@ on:
 
 env:
   JOBS: 1
+  FETCH_DEPTH: 2
 
 jobs:
   build_glibc_linux_mac:
@@ -30,7 +31,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-depth: $FETCH_DEPTH
     
     - name: Tarball source
       run: |
@@ -111,7 +112,8 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-depth: $FETCH_DEPTH
+
     - name: Install Dependencies on Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
@@ -167,7 +169,8 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-depth: $FETCH_DEPTH
+
     - name: Download a Build Artifact
       uses: actions/download-artifact@v2
       with:

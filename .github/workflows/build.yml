@@ -29,7 +29,7 @@ jobs:
 
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
         fetch-depth: 2
     
     - name: Tarball source
@@ -110,7 +110,7 @@ jobs:
 
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
         fetch-depth: 2
 
     - name: Install Dependencies on Ubuntu
@@ -167,7 +167,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
+        submodules: true
         fetch-depth: 2
 
     - name: Download a Build Artifact

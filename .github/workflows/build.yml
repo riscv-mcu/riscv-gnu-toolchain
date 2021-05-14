@@ -28,6 +28,7 @@ jobs:
         df -h
         free -m
         cat /proc/cpuinfo
+    
 
     - uses: actions/checkout@v2
       with:

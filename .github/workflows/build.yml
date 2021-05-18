@@ -130,6 +130,7 @@ jobs:
       CC: gcc-8
       CXX: g++-8
       PREFIX: ${{ github.workspace }}/riscv
+      JOBS: 2
 
     steps:
     - name: Show System Information

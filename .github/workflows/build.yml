@@ -7,7 +7,7 @@ on:
     branches: [ nuclei* ]
 
 env:
-  JOBS: 1
+  JOBS: 4
 
 jobs:
   build_glibc_linux_mac:
@@ -58,6 +58,29 @@ jobs:
       run: |
           brew update
           brew install zlib expat gawk gnu-sed
+          
+    - name: Maximize build disk space
+      # You may pin to the exact commit or the version.
+      # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
+      uses: easimon/maximize-build-space@v4
+      with:
+        # Space to be left free on the root filesystem, in Megabytes.
+        root-reserve-mb: 1024 # optional, default is 1024
+        # Space to be left free on the temp filesystem (/mnt), in Megabytes.
+        temp-reserve-mb: 512 # optional, default is 100
+        # Swap space to create, in Megabytes.
+        swap-size-mb: 8192 # optional, default is 4096
+        # Create the LVM disk images as sparse files, making the space required for the LVM image files *appear* unused on the
+        #hosting volumes until actually allocated. Use with care, this can lead to surprising out-of-disk-space situations.
+        #You should prefer adjusting root-reserve-mb/temp-reserve-mb over using this option.
+        # Absolute path to the mount point where the build space will be available, defaults to $GITHUB_WORKSPACE if unset.
+        # Removes .NET runtime and libraries. (frees ~17 GB)
+        remove-dotnet: true # optional, default is false
+        # Removes Android SDKs and Tools. (frees ~11 GB)
+        remove-android: true # optional, default is false
+        # Removes GHC (Haskell) artifacts. (frees ~2.7 GB)
+        remove-haskell: true # optional, default is false
+
     - name: Configure
       run: |
         ./configure --prefix=$PREFIX --enable-multilib --with-cmodel=medany
@@ -123,6 +146,28 @@ jobs:
       if: startsWith(matrix.os, 'macOS')
       run: |
           brew install zlib expat gawk gnu-sed
+    - name: Maximize build disk space
+      # You may pin to the exact commit or the version.
+      # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
+      uses: easimon/maximize-build-space@v4
+      with:
+        # Space to be left free on the root filesystem, in Megabytes.
+        root-reserve-mb: 1024 # optional, default is 1024
+        # Space to be left free on the temp filesystem (/mnt), in Megabytes.
+        temp-reserve-mb: 512 # optional, default is 100
+        # Swap space to create, in Megabytes.
+        swap-size-mb: 8192 # optional, default is 4096
+        # Create the LVM disk images as sparse files, making the space required for the LVM image files *appear* unused on the
+        #hosting volumes until actually allocated. Use with care, this can lead to surprising out-of-disk-space situations.
+        #You should prefer adjusting root-reserve-mb/temp-reserve-mb over using this option.
+        # Absolute path to the mount point where the build space will be available, defaults to $GITHUB_WORKSPACE if unset.
+        # Removes .NET runtime and libraries. (frees ~17 GB)
+        remove-dotnet: true # optional, default is false
+        # Removes Android SDKs and Tools. (frees ~11 GB)
+        remove-android: true # optional, default is false
+        # Removes GHC (Haskell) artifacts. (frees ~2.7 GB)
+        remove-haskell: true # optional, default is false
+  
     - name: Configure
       run: |
         ./configure --enable-multilib --prefix=$PREFIX --with-cmodel=medany
@@ -191,6 +236,28 @@ jobs:
           build-essential curl dejagnu expect flex gawk gperf \
           libtool patchutils texinfo python3 zip \
           mingw-w64 gdb-mingw-w64 libz-mingw-w64-dev
+    - name: Maximize build disk space
+      # You may pin to the exact commit or the version.
+      # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
+      uses: easimon/maximize-build-space@v4
+      with:
+        # Space to be left free on the root filesystem, in Megabytes.
+        root-reserve-mb: 1024 # optional, default is 1024
+        # Space to be left free on the temp filesystem (/mnt), in Megabytes.
+        temp-reserve-mb: 512 # optional, default is 100
+        # Swap space to create, in Megabytes.
+        swap-size-mb: 8192 # optional, default is 4096
+        # Create the LVM disk images as sparse files, making the space required for the LVM image files *appear* unused on the
+        #hosting volumes until actually allocated. Use with care, this can lead to surprising out-of-disk-space situations.
+        #You should prefer adjusting root-reserve-mb/temp-reserve-mb over using this option.
+        # Absolute path to the mount point where the build space will be available, defaults to $GITHUB_WORKSPACE if unset.
+        # Removes .NET runtime and libraries. (frees ~17 GB)
+        remove-dotnet: true # optional, default is false
+        # Removes Android SDKs and Tools. (frees ~11 GB)
+        remove-android: true # optional, default is false
+        # Removes GHC (Haskell) artifacts. (frees ~2.7 GB)
+        remove-haskell: true # optional, default is false
+
     - name: Install third-parties libraries for Windows Build
       run: |
         mkdir 3rd_libs

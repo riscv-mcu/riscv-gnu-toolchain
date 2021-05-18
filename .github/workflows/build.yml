@@ -143,12 +143,14 @@ jobs:
           sudo apt-get install autoconf automake autotools-dev bc bison \
           build-essential curl dejagnu expect flex gawk gperf libtool patchutils texinfo \
           g++-8 gcc-8
+
     - name: Install Dependencies on macOS
       if: startsWith(matrix.os, 'macOS')
       run: |
           brew install zlib expat gawk gnu-sed
 
     - name: Maximize build disk space
+      if: startsWith(matrix.os, 'ubuntu')
       # You may pin to the exact commit or the version.
       # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
       uses: easimon/maximize-build-space@v4
@@ -262,6 +264,7 @@ jobs:
       with:
         # Artifact name
         name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-16.04
+
     - name: Extract prebuilt ubuntu toolchain
       run: |
         mkdir prebuilt_riscv_gcc

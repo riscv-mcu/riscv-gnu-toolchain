@@ -225,6 +225,7 @@ jobs:
     
     env: 
       PREFIX: ${{ github.workspace }}/riscv
+      JOBS: 2
 
     steps:
 

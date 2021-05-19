@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ nuclei* ]
 
+env:
+  JOBS: 4
+
 jobs:
   build_glibc_linux_mac:
     name: glibc for ${{ matrix.os }} 
@@ -19,10 +22,52 @@ jobs:
       CXX: g++-8
 
     steps:
+    - name: Show System Information
+      run: |
+        uname -a
+        df -h
+
+    - name: Install Dependencies on Ubuntu
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+          sudo apt-get update
+          sudo apt-get -y install autoconf automake autotools-dev bc bison \
+          build-essential curl dejagnu expect flex gawk gperf libtool patchutils texinfo \
+          g++-8 gcc-8
+
+    - name: Install Dependencies on macOS
+      if: startsWith(matrix.os, 'macOS')
+      run: |
+          brew update
+          brew install zlib expat gawk gnu-sed
+          
+    - name: Maximize build disk space
+      if: startsWith(matrix.os, 'ubuntu')
+      # You may pin to the exact commit or the version.
+      # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
+      uses: easimon/maximize-build-space@v4
+      with:
+        # Space to be left free on the root filesystem, in Megabytes.
+        root-reserve-mb: 1024 # optional, default is 1024
+        # Space to be left free on the temp filesystem (/mnt), in Megabytes.
+        temp-reserve-mb: 512 # optional, default is 100
+        # Swap space to create, in Megabytes.
+        swap-size-mb: 8192 # optional, default is 4096
+        # Create the LVM disk images as sparse files, making the space required for the LVM image files *appear* unused on the
+        #hosting volumes until actually allocated. Use with care, this can lead to surprising out-of-disk-space situations.
+        #You should prefer adjusting root-reserve-mb/temp-reserve-mb over using this option.
+        # Absolute path to the mount point where the build space will be available, defaults to $GITHUB_WORKSPACE if unset.
+        # Removes .NET runtime and libraries. (frees ~17 GB)
+        remove-dotnet: true # optional, default is false
+        # Removes Android SDKs and Tools. (frees ~11 GB)
+        remove-android: true # optional, default is false
+        # Removes GHC (Haskell) artifacts. (frees ~2.7 GB)
+        remove-haskell: true # optional, default is false
+
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
-        fetch-depth: 0
+        submodules: true
+        fetch-depth: 2
     
     - name: Tarball source
       run: |
@@ -38,30 +83,22 @@ jobs:
         path: source.tar.gz
       # continue build on error
       continue-on-error: true
-    
-    - name: Install Dependencies on Ubuntu
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-          sudo apt-get -y install autoconf automake autotools-dev bc bison \
-          build-essential curl dejagnu expect flex gawk gperf libtool patchutils texinfo \
-          g++-8 gcc-8
-    - name: Install Dependencies on macOS
-      if: startsWith(matrix.os, 'macOS')
-      run: |
-          brew update
-          brew install zlib expat gawk gnu-sed
+
     - name: Configure
       run: |
         ./configure --prefix=$PREFIX --enable-multilib --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
+
     - name: Change toolchain name to Nuclei
       run: |
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+
     - name: Build Toolchain
       run: |
-        export MAKE="make -j"
+        export MAKE="make -j $JOBS"
         make linux
+
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
       run: |
@@ -71,6 +108,7 @@ jobs:
           do
           strip -s $i
           done
+
     - name: Archive Toolchain
       run: |
         tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_glibc_${{ matrix.os }}.tar.bz2 -C ${{ env.PREFIX }} .
@@ -93,34 +131,70 @@ jobs:
       CC: gcc-8
       CXX: g++-8
       PREFIX: ${{ github.workspace }}/riscv
+      JOBS: 2
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-        fetch-depth: 0
+    - name: Show System Information
+      run: |
+        uname -a
+        df -h
+
     - name: Install Dependencies on Ubuntu
       if: startsWith(matrix.os, 'ubuntu')
       run: |
-          sudo apt-get install autoconf automake autotools-dev bc bison \
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake autotools-dev bc bison \
           build-essential curl dejagnu expect flex gawk gperf libtool patchutils texinfo \
           g++-8 gcc-8
+
     - name: Install Dependencies on macOS
       if: startsWith(matrix.os, 'macOS')
       run: |
           brew install zlib expat gawk gnu-sed
+
+    - name: Maximize build disk space
+      if: startsWith(matrix.os, 'ubuntu')
+      # You may pin to the exact commit or the version.
+      # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
+      uses: easimon/maximize-build-space@v4
+      with:
+        # Space to be left free on the root filesystem, in Megabytes.
+        root-reserve-mb: 1024 # optional, default is 1024
+        # Space to be left free on the temp filesystem (/mnt), in Megabytes.
+        temp-reserve-mb: 512 # optional, default is 100
+        # Swap space to create, in Megabytes.
+        swap-size-mb: 8192 # optional, default is 4096
+        # Create the LVM disk images as sparse files, making the space required for the LVM image files *appear* unused on the
+        #hosting volumes until actually allocated. Use with care, this can lead to surprising out-of-disk-space situations.
+        #You should prefer adjusting root-reserve-mb/temp-reserve-mb over using this option.
+        # Absolute path to the mount point where the build space will be available, defaults to $GITHUB_WORKSPACE if unset.
+        # Removes .NET runtime and libraries. (frees ~17 GB)
+        remove-dotnet: true # optional, default is false
+        # Removes Android SDKs and Tools. (frees ~11 GB)
+        remove-android: true # optional, default is false
+        # Removes GHC (Haskell) artifacts. (frees ~2.7 GB)
+        remove-haskell: true # optional, default is false
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 2
+
     - name: Configure
       run: |
         ./configure --enable-multilib --prefix=$PREFIX --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
+
     - name: Change toolchain name to Nuclei
       run: |
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+
     - name: Build Toolchain
       run: |
-        export MAKE="make -j"
+        export MAKE="make -j $JOBS"
         make
+
     - name: Strip Toolchain
       if: startsWith(matrix.os, 'ubuntu')
       run: |
@@ -130,9 +204,11 @@ jobs:
           do
           strip -s $i
           done
+
     - name: Archive Toolchain
       run: |
         tar -jcf nuclei_riscv_gnu_toolchain_prebuilt_elf_${{ matrix.os }}.tar.bz2 -C $PREFIX .
+
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:
@@ -149,17 +225,51 @@ jobs:
     
     env: 
       PREFIX: ${{ github.workspace }}/riscv
+      JOBS: 2
 
     steps:
+
+    - name: Install Dependencies on Ubuntu
+      run: |
+          sudo apt-get update
+          sudo apt-get -y install autoconf automake autotools-dev bc bison \
+          build-essential curl dejagnu expect flex gawk gperf \
+          libtool patchutils texinfo python3 zip \
+          mingw-w64 gdb-mingw-w64 libz-mingw-w64-dev
+
+    - name: Maximize build disk space
+      # You may pin to the exact commit or the version.
+      # uses: easimon/maximize-build-space@b4d02c14493a9653fe7af06cc89ca5298071c66e
+      uses: easimon/maximize-build-space@v4
+      with:
+        # Space to be left free on the root filesystem, in Megabytes.
+        root-reserve-mb: 1024 # optional, default is 1024
+        # Space to be left free on the temp filesystem (/mnt), in Megabytes.
+        temp-reserve-mb: 512 # optional, default is 100
+        # Swap space to create, in Megabytes.
+        swap-size-mb: 8192 # optional, default is 4096
+        # Create the LVM disk images as sparse files, making the space required for the LVM image files *appear* unused on the
+        #hosting volumes until actually allocated. Use with care, this can lead to surprising out-of-disk-space situations.
+        #You should prefer adjusting root-reserve-mb/temp-reserve-mb over using this option.
+        # Absolute path to the mount point where the build space will be available, defaults to $GITHUB_WORKSPACE if unset.
+        # Removes .NET runtime and libraries. (frees ~17 GB)
+        remove-dotnet: true # optional, default is false
+        # Removes Android SDKs and Tools. (frees ~11 GB)
+        remove-android: true # optional, default is false
+        # Removes GHC (Haskell) artifacts. (frees ~2.7 GB)
+        remove-haskell: true # optional, default is false
+
     - uses: actions/checkout@v2
       with:
-        submodules: recursive
-        fetch-depth: 0
+        submodules: true
+        fetch-depth: 2
+
     - name: Download a Build Artifact
       uses: actions/download-artifact@v2
       with:
         # Artifact name
         name: nuclei_riscv_gnu_toolchain_prebuilt_elf_ubuntu-16.04
+
     - name: Extract prebuilt ubuntu toolchain
       run: |
         mkdir prebuilt_riscv_gcc
@@ -170,12 +280,7 @@ jobs:
         rm -f *.tar.bz2
         echo "export PATH=$PREBUILT_RISCV_GCC:\$PATH" > setup_gcc.sh
         cat setup_gcc.sh
-    - name: Install Dependencies on Ubuntu
-      run: |
-          sudo apt-get install autoconf automake autotools-dev bc bison \
-          build-essential curl dejagnu expect flex gawk gperf \
-          libtool patchutils texinfo python3 zip \
-          mingw-w64 gdb-mingw-w64 libz-mingw-w64-dev
+
     - name: Install third-parties libraries for Windows Build
       run: |
         mkdir 3rd_libs
@@ -193,19 +298,23 @@ jobs:
         [ -f /usr/i686-w64-mingw32/lib/libexpat.dll.a ] && sudo mv /usr/i686-w64-mingw32/lib/libexpat.dll.a /usr/i686-w64-mingw32/lib/libexpat.dll.a.bak
         [ -f /usr/i686-w64-mingw32/lib/libz.dll.a ] && sudo mv /usr/i686-w64-mingw32/lib/libz.dll.a /usr/i686-w64-mingw32/lib/libz.dll.a.bak
         [ -f /usr/x86_64-w64-mingw32/lib/libz.dll.a ] && sudo mv /usr/x86_64-w64-mingw32/lib/libz.dll.a /usr/x86_64-w64-mingw32/lib/libz.dll.a.bak
+
     - name: Configure
       run: |
         ./configure --enable-multilib --prefix=$PREFIX --with-host=i686-w64-mingw32 --with-cmodel=medany
         cd ./riscv-gcc/ && ./contrib/download_prerequisites
         cd -
+
     - name: Change toolchain name to Nuclei
       run: |
         sed -i -e 's/make_tuple = riscv$(1)-unknown-$(2)/make_tuple = riscv-nuclei-$(2)/g' Makefile
+
     - name: Build Toolchain
       run: |
-        export MAKE="make -j"
+        export MAKE="make -j $JOBS"
         source setup_gcc.sh
         make
+
     - name: Strip Toolchain
       run: |
           cd $PREFIX
@@ -218,12 +327,14 @@ jobs:
           do
           i686-w64-mingw32-strip -s $i
           done
+
     - name: Archive Toolchain
       run: |
         WORKPWD=$(pwd)
         cd $PREFIX
         zip -9 -q -r ${WORKPWD}/nuclei_riscv_gnu_toolchain_prebuilt_elf_windows.zip .
         cd ${WORKPWD}
+
     - name: Upload built toolchain artifact
       uses: actions/upload-artifact@v2
       with:

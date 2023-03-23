@@ -746,7 +746,7 @@ stamps/build-gcc-newlib-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-newlib
 		--target=$(NEWLIB_TUPLE) \
 		$(CONFIGURE_HOST) \
 		--prefix=$(INSTALL_DIR) \
-		--disable-shared \
+		--enable-shared \
 		--disable-threads \
 		--enable-languages=c,c++ \
 		--with-pkgversion="$(GCCPKGVER)" \

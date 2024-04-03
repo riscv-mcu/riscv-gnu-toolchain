@@ -28,17 +28,17 @@ struct ipv6_rpl_sr_hdr {
 		pad:4,
 		reserved1:16;
 #elif defined(__BIG_ENDIAN_BITFIELD)
-	__u32	cmpri:4,
-		cmpre:4,
+	__u32	reserved:20,
 		pad:4,
-		reserved:20;
+		cmpri:4,
+		cmpre:4;
 #else
 #error  "Please fix <asm/byteorder.h>"
 #endif
 
 	union {
-		__DECLARE_FLEX_ARRAY(struct in6_addr, addr);
-		__DECLARE_FLEX_ARRAY(__u8, data);
+		struct in6_addr addr[0];
+		__u8 data[0];
 	} segments;
 } __attribute__((packed));
 

@@ -17,4 +17,4 @@ struct ip6t_log_info {
 	char prefix[30];
 };
 
-#endif /* _IP6T_LOG_H */
+#endif /*_IPT_LOG_H*/

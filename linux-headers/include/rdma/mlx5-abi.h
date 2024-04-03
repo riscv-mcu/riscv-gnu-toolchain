@@ -50,7 +50,6 @@ enum {
 	MLX5_QP_FLAG_ALLOW_SCATTER_CQE	= 1 << 8,
 	MLX5_QP_FLAG_PACKET_BASED_CREDIT_MODE	= 1 << 9,
 	MLX5_QP_FLAG_UAR_PAGE_INDEX = 1 << 10,
-	MLX5_QP_FLAG_DCI_STREAM	= 1 << 11,
 };
 
 enum {
@@ -102,9 +101,6 @@ enum mlx5_ib_alloc_ucontext_resp_mask {
 	MLX5_IB_ALLOC_UCONTEXT_RESP_MASK_CORE_CLOCK_OFFSET = 1UL << 0,
 	MLX5_IB_ALLOC_UCONTEXT_RESP_MASK_DUMP_FILL_MKEY    = 1UL << 1,
 	MLX5_IB_ALLOC_UCONTEXT_RESP_MASK_ECE               = 1UL << 2,
-	MLX5_IB_ALLOC_UCONTEXT_RESP_MASK_SQD2RTS           = 1UL << 3,
-	MLX5_IB_ALLOC_UCONTEXT_RESP_MASK_REAL_TIME_TS	   = 1UL << 4,
-	MLX5_IB_ALLOC_UCONTEXT_RESP_MASK_MKEY_UPDATE_TAG   = 1UL << 5,
 };
 
 enum mlx5_user_cmds_supp_uhw {
@@ -240,11 +236,6 @@ struct mlx5_ib_striding_rq_caps {
 	__u32 reserved;
 };
 
-struct mlx5_ib_dci_streams_caps {
-	__u8 max_log_num_concurent;
-	__u8 max_log_num_errored;
-};
-
 enum mlx5_ib_query_dev_resp_flags {
 	/* Support 128B CQE compression */
 	MLX5_IB_QUERY_DEV_RESP_FLAGS_CQE_128B_COMP = 1 << 0,
@@ -273,14 +264,12 @@ struct mlx5_ib_query_device_resp {
 	struct mlx5_ib_sw_parsing_caps sw_parsing_caps;
 	struct mlx5_ib_striding_rq_caps striding_rq_caps;
 	__u32	tunnel_offloads_caps; /* enum mlx5_ib_tunnel_offloads */
-	struct  mlx5_ib_dci_streams_caps dci_streams_caps;
-	__u16 reserved;
+	__u32	reserved;
 };
 
 enum mlx5_ib_create_cq_flags {
 	MLX5_IB_CREATE_CQ_FLAGS_CQE_128B_PAD	= 1 << 0,
 	MLX5_IB_CREATE_CQ_FLAGS_UAR_PAGE_INDEX  = 1 << 1,
-	MLX5_IB_CREATE_CQ_FLAGS_REAL_TIME_TS	= 1 << 2,
 };
 
 struct mlx5_ib_create_cq {
@@ -321,11 +310,6 @@ struct mlx5_ib_create_srq_resp {
 	__u32	reserved;
 };
 
-struct mlx5_ib_create_qp_dci_streams {
-	__u8 log_num_concurent;
-	__u8 log_num_errored;
-};
-
 struct mlx5_ib_create_qp {
 	__aligned_u64 buf_addr;
 	__aligned_u64 db_addr;
@@ -340,8 +324,7 @@ struct mlx5_ib_create_qp {
 		__aligned_u64 access_key;
 	};
 	__u32  ece_options;
-	struct  mlx5_ib_create_qp_dci_streams dci_streams;
-	__u16 reserved;
+	__u32  reserved;
 };
 
 /* RX Hash function flags */

@@ -45,13 +45,13 @@ struct dlm_lock_params {
 	void *bastaddr;
 	struct dlm_lksb *lksb;
 	char lvb[DLM_USER_LVB_LEN];
-	char name[];
+	char name[0];
 };
 
 struct dlm_lspace_params {
 	__u32 flags;
 	__u32 minor;
-	char name[];
+	char name[0];
 };
 
 struct dlm_purge_params {

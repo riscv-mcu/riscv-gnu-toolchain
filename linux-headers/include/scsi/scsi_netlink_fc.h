@@ -35,7 +35,7 @@
  * FC Transport Broadcast Event Message :
  *   FC_NL_ASYNC_EVENT
  *
- * Note: if Vendor Unique message, event_data_flex will be start of
+ * Note: if Vendor Unique message, &event_data will be  start of
  * 	 vendor unique payload, and the length of the payload is
  *       per event_datalen
  *
@@ -50,10 +50,7 @@ struct fc_nl_event {
 	__u16 event_datalen;
 	__u32 event_num;
 	__u32 event_code;
-	union {
-		__u32 event_data;
-		__DECLARE_FLEX_ARRAY(__u8, event_data_flex);
-	};
+	__u32 event_data;
 } __attribute__((aligned(sizeof(__u64))));
 
 

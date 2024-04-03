@@ -45,7 +45,6 @@
 
 #define NFS4_OPEN_RESULT_CONFIRM		0x0002
 #define NFS4_OPEN_RESULT_LOCKTYPE_POSIX		0x0004
-#define NFS4_OPEN_RESULT_PRESERVE_UNLINKED	0x0008
 #define NFS4_OPEN_RESULT_MAY_NOTIFY_LOCK	0x0020
 
 #define NFS4_SHARE_ACCESS_MASK	0x000F
@@ -179,3 +178,9 @@
 #define NFS4_MAX_BACK_CHANNEL_OPS 2
 
 #endif /* _LINUX_NFS4_H */
+
+/*
+ * Local variables:
+ *  c-basic-offset: 8
+ * End:
+ */

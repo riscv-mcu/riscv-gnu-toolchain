@@ -3,8 +3,6 @@
 #define __ASM_GENERIC_SHMBUF_H
 
 #include <asm/bitsperlong.h>
-#include <asm/ipcbuf.h>
-#include <asm/posix_types.h>
 
 /*
  * The shmid64_ds structure for x86 architecture.
@@ -26,7 +24,7 @@
 
 struct shmid64_ds {
 	struct ipc64_perm	shm_perm;	/* operation perms */
-	__kernel_size_t		shm_segsz;	/* size of segment (bytes) */
+	size_t			shm_segsz;	/* size of segment (bytes) */
 #if __BITS_PER_LONG == 64
 	long			shm_atime;	/* last attach time */
 	long			shm_dtime;	/* last detach time */

@@ -104,7 +104,7 @@ struct inet_diag_hostcond {
 	__u8	family;
 	__u8	prefix_len;
 	int	port;
-	__be32	addr[];
+	__be32	addr[0];
 };
 
 struct inet_diag_markcond {

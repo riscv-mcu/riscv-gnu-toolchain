@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: GPL-1.0+ WITH Linux-syscall-note */
 /*
- * Copyright 1993 by Theodore Ts'o.
+ * include/linux/loop.h
+ *
+ * Written by Theodore Ts'o, 3/29/93.
+ *
+ * Copyright 1993 by Theodore Ts'o.  Redistribution of this file is
+ * permitted under the GNU General Public License.
  */
 #ifndef _LINUX_LOOP_H
 #define _LINUX_LOOP_H
@@ -40,7 +45,7 @@ struct loop_info {
 	unsigned long	   lo_inode; 		/* ioctl r/o */
 	__kernel_old_dev_t lo_rdevice; 		/* ioctl r/o */
 	int		   lo_offset;
-	int		   lo_encrypt_type;		/* obsolete, ignored */
+	int		   lo_encrypt_type;
 	int		   lo_encrypt_key_size; 	/* ioctl w/o */
 	int		   lo_flags;
 	char		   lo_name[LO_NAME_SIZE];
@@ -56,7 +61,7 @@ struct loop_info64 {
 	__u64		   lo_offset;
 	__u64		   lo_sizelimit;/* bytes, 0 == max available */
 	__u32		   lo_number;			/* ioctl r/o */
-	__u32		   lo_encrypt_type;		/* obsolete, ignored */
+	__u32		   lo_encrypt_type;
 	__u32		   lo_encrypt_key_size;		/* ioctl w/o */
 	__u32		   lo_flags;
 	__u8		   lo_file_name[LO_NAME_SIZE];

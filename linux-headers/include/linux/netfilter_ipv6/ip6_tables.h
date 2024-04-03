@@ -241,7 +241,7 @@ struct ip6t_replace {
 	struct xt_counters *counters;
 
 	/* The entries (hang off end: not really an array). */
-	struct ip6t_entry entries[];
+	struct ip6t_entry entries[0];
 };
 
 /* The argument to IP6T_SO_GET_ENTRIES. */
@@ -253,7 +253,7 @@ struct ip6t_get_entries {
 	unsigned int size;
 
 	/* The entries. */
-	struct ip6t_entry entrytable[];
+	struct ip6t_entry entrytable[0];
 };
 
 /* Helper functions */

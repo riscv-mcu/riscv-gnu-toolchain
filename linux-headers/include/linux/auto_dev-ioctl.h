@@ -109,7 +109,7 @@ struct autofs_dev_ioctl {
 		struct args_ismountpoint	ismountpoint;
 	};
 
-	char path[];
+	char path[0];
 };
 
 static __inline__ void init_autofs_dev_ioctl(struct autofs_dev_ioctl *in)

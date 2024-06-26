@@ -1,5 +1,9 @@
 # How to build riscv toolchain for Nuclei RISC-V Processor
 
+> [!NOTE]
+>
+> Build a releasable toolchain is a complicated thing, we just shared our script used internally here,> and we don't provide technical support for this script, you should look into the scripts by yourself to understand how it works.
+
 This directory contains scripts required for building riscv toolchain
 of Nuclei RISC-V processor.
 
@@ -11,7 +15,7 @@ for glibc.
 
 ## Support Host and Requirements
 
-- Tested on Ubuntu 20.04, real machine not docker environment
+- Tested on Ubuntu 20.04 Host, real machine not docker environment
 - Git, docker or podman is required
 - Good network connection to github, since most source code are pulled from there
 
@@ -50,6 +54,9 @@ FORCE_SUBMODULE=1 ./scripts/toolchain/prepsrc.sh feature/rvgcc
 
 ## Run docker image to build toolchain
 
+> [!WARNING]
+> In host environment now
+
 We provide two docker images for build toolchains.
 
 - **gnutoolchain-centos6**: Used to build toolchain for linux host.
@@ -75,6 +82,7 @@ Here assume we are build a linux64 toolchain.
 
 ### Build toolchain
 
+> [!WARNING]
 > In docker environment now
 
 ~~~shell
@@ -101,6 +109,7 @@ DOREBUILD=1 TOOLVER=2024.07-test1 JOBS=32 ./scripts/toolchain/build.sh
 
 ### Cleanup toolchain
 
+> [!WARNING]
 > In docker environment now
 
 You can cleanup build directories for specified tool version, tool host, tool type, and also clean installed
@@ -114,6 +123,7 @@ TOOLVER=2024.07-eng1 TOOLHOST=linux64 TOOLTYPE=newlibc ./scripts/toolchain/clean
 
 ## Release toolchain
 
+> [!WARNING]
 > In host environment now, only for Nuclei internal usage
 
 If you want to sync successfully built toolchain to internal share location, you can run it like this.

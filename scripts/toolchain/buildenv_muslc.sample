@@ -5,7 +5,7 @@ TOOLTYPE=muslc
 # toolchain host: win32 or linux64
 #TOOLHOST=linux64
 # toolchain version, / or \ isnot allowed, such as 2023.04-devbuild or 2023.04.10
-TOOLVER=2023.08
+TOOLVER=2024.06
 # arguments passed to --with-multilib-generator
 # if not empty, it will enable multilib build
 # customized version: Zc + Xxldsp + Zb

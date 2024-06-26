@@ -29,14 +29,16 @@ for glibc.
 
 ## Prepare source code
 
+> We don't provide any support for these scripts, the best way to use it is to take a look at the script itself.
+
 If you want to build this toolchain, you can clone source code like this below:
 
 ~~~shell
 # used by outside to build toolchain only
-# the branch to be build, select nuclei/2023
+# the branch to be build, select nuclei/2024-gcc13
 # For nuclei engineer, you can change the url to nuclei internal gito server url
 # you can change the https url to ssh url, if you have setup ssh keys of github/gitee/gito
-git clone -b nuclei/2023 --depth 1 https://github.com/riscv-mcu/riscv-gnu-toolchain.git
+git clone -b nuclei/2024-gcc13 --depth 1 https://github.com/riscv-mcu/riscv-gnu-toolchain.git
 cd riscv-gnu-toolchain
 # clone and update submodule
 # FORCE_SUBMODULE=0: if you have already clone the correct branch and prepared submodule source code
@@ -63,8 +65,8 @@ PULLFIRST=1 ./scripts/toolchain/docker.sh linux64
 # If you want to build win32 toolchain, please make sure the same linx64 version is built first
 # or you need to set PATH to include your linux toolchain path first.
 # such as below:
-# for glibc: export PATH=/work/LocalInstall/linux64/glibc/2023.04-eng1/gcc/bin:$PATH
-# for newlibc: export PATH=/work/LocalInstall/linux64/newlibc/2023.04-eng1/gcc/bin:$PATH
+# for glibc: export PATH=/work/LocalInstall/linux64/glibc/2024.07-eng1/gcc/bin:$PATH
+# for newlibc: export PATH=/work/LocalInstall/linux64/newlibc/2024.07-eng1/gcc/bin:$PATH
 ~~~
 
 Now you should be in docker environment now.
@@ -85,13 +87,16 @@ cp scripts/toolchain/buildenv.sample mybuild.env
 # Then use the build environment file like this
 BUILDENV=mybuild.env source ./scripts/toolchain/setup_env.sh
 # Now you can build toolchain now, and overwrite some variables during build like this
-## eg. I want to change the toolchain version TOOLVER to 2023.04-test1, use 32 jobs
+## eg. I want to change the toolchain version TOOLVER to 2024.07-test1, use 32 jobs
 ## And it will save build environment file to savebuild_<toolhost>_<tooltype>.env
-TOOLVER=2023.04-test1 JOBS=32 ./scripts/toolchain/build.sh
+TOOLVER=2024.07-test1 JOBS=32 ./scripts/toolchain/build.sh
 # If DOCLEAN=1, then when toolchain is built successfully, the toolchain build folder will be cleanup,
 # if failed, the build folder will not be cleaned, you can rebuilt it without reconfigure it by add DOREBUILD=1
-DOREBUILD=1 TOOLVER=2023.04-test1 JOBS=32 ./scripts/toolchain/build.sh
-# And you can also directly cd to the build folder, and cd to its subfolder to build one of stages
+DOREBUILD=1 TOOLVER=2024.07-test1 JOBS=32 ./scripts/toolchain/build.sh
+# If you don't want to rebuild all this repo, you just want to build one of the repo
+# you can also directly cd to the build folder, and cd to its subfolder to build one of stages
+# The build folder will be displayed in the console, please take care, you can refer $toolbuilddir in the scripts/toolchain/build.sh
+# to see how it works and you also need to refer to the Makefile.in to see what commands are really executed during each step
 ~~~
 
 ### Cleanup toolchain
@@ -103,8 +108,8 @@ toolchain version.
 
 ~~~shell
 # If you want to clean up installed local toolchain version please pass export CLEANINSTALL=1
-# eg. cleanup tool version 2023.04-eng1 linux64 newlibc
-TOOLVER=2023.04-eng1 TOOLHOST=linux64 TOOLTYPE=newlibc ./scripts/toolchain/cleanup.sh
+# eg. cleanup tool version 2024.07-eng1 linux64 newlibc
+TOOLVER=2024.07-eng1 TOOLHOST=linux64 TOOLTYPE=newlibc ./scripts/toolchain/cleanup.sh
 ~~~
 
 ## Release toolchain
@@ -114,6 +119,6 @@ TOOLVER=2023.04-eng1 TOOLHOST=linux64 TOOLTYPE=newlibc ./scripts/toolchain/clean
 If you want to sync successfully built toolchain to internal share location, you can run it like this.
 
 ~~~shell
-# Assume you want to sync tool version 2023.04-eng1 linux64 newlibc
-TOOLVER=2023.04-eng1 TOOLHOST=linux64 TOOLTYPE=newlibc ./scripts/toolchain/release.sh
+# Assume you want to sync tool version 2024.07-eng1 linux64 newlibc
+TOOLVER=2024.07-eng1 TOOLHOST=linux64 TOOLTYPE=newlibc ./scripts/toolchain/release.sh
 ~~~

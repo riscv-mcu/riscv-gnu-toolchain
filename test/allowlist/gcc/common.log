@@ -1,47 +1,30 @@
-#
-# Check for nop insns fails due to ".option nopic".
-#
-FAIL: c-c++-common/patchable_function_entry-decl.c
-FAIL: c-c++-common/patchable_function_entry-default.c
-FAIL: c-c++-common/patchable_function_entry-definition.c
-#
-# XXX: Need review.
-#
-XPASS: gcc.dg/attr-alloc_size-11.c
-#
-# We didn't define TARGET_HAVE_SPECULATION_SAFE_VALUE or
-# speculation_barrier pattern
-#
 FAIL: c-c++-common/spec-barrier-1.c
-#
-# Upstream fail cases due to target check with 'vect_slp_v2hi_store_align' and 'vect_slp_v4hi_store_unalign'
-#
-FAIL: gcc.dg/Warray-bounds-48.c
-FAIL: gcc.dg/Wzero-length-array-bounds-2.c
-FAIL: gcc.dg/uninit-pred-9_b.c
-XPASS: gcc.dg/uninit-pred-7_a.c
-# Upstream regression,
-# Patch by Palmer:
-#   https://gcc.gnu.org/pipermail/gcc-patches/2022-May/593995.html
-# Discuss in:
-#   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=102892
-FAIL: gcc.dg/analyzer/pr104308.c
-FAIL: gcc.dg/pr102892-1.c
-#
-# Upstream fail cases due to tree dump check
-#
-# Patch by Palmer:
-# https://gcc.gnu.org/pipermail/gcc-patches/2022-September/600932.html
-#
-FAIL: gcc.dg/tree-ssa/ssa-sink-18.c
-#
-# Upstream fixed cases
-#
-# By Palmer:
-#   https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=010af1040bcf4870c8f1aac88a7b1538f622858b
-FAIL: gcc.dg/debug/btf/btf-datasec-1.c
-# By Jiawei:
-#   https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=dc32901a0221a43e121591b9819b4e33bcc2fd0a
-FAIL: g++.dg/opt/const7.C
-#   https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=b18e5d7e5f9df69759f0fbc2bed91d5e51313e79
-FAIL: gcc.target/riscv/pr105666.c
+FAIL: gcc.dg/hierarchical-discriminator-loop-version.c
+FAIL: gcc.dg/hierarchical-discriminator-unroll.c
+FAIL: gcc.dg/ipa/pr122458.c
+FAIL: gcc.dg/plugin/crash-test-nested-ice.c
+FAIL: gcc.dg/plugin/crash-test-nested-write-through-null.c
+FAIL: gcc.dg/sarif-output/bad-pragma.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/dynamic-lmul2-2.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/dynamic-lmul2-7.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/dynamic-lmul4-10.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/pr113112-1.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/pr113281-3.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/pr113281-4.c
+FAIL: gcc.dg/vect/costmodel/riscv/rvv/pr114516.c
+FAIL: gcc.dg/vect/pr53773.c
+FAIL: gcc.dg/vect/pr65310.c
+FAIL: gcc.dg/vect/pr88598-1.c
+FAIL: gcc.dg/vect/pr88598-2.c
+FAIL: gcc.dg/vect/pr88598-3.c
+FAIL: gcc.target/riscv/rvv/autovec/pr113206-1.c
+FAIL: gcc.target/riscv/rvv/autovec/pr113206-2.c
+FAIL: gcc.target/riscv/rvv/vsetvl/pr117974.c
+UNRESOLVED: gcc.target/riscv/pr122675-1.c
+UNRESOLVED: gcc.target/riscv/rvv/autovec/pr120378-2.c
+UNRESOLVED: gcc.target/riscv/rvv/autovec/pr120378-3.c
+UNRESOLVED: gcc.target/riscv/rvv/autovec/pr120378-4.c
+XPASS: gcc.dg/plugin/crash-test-nested-ice.c
+XPASS: gcc.dg/plugin/crash-test-nested-write-through-null.c
+XPASS: gcc.dg/vect/costmodel/riscv/rvv/pr113281-1.c
+XPASS: gcc.dg/vect/costmodel/riscv/rvv/pr113281-2.c

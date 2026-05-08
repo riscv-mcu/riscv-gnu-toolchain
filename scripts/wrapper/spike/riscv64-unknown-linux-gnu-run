@@ -1,7 +1,13 @@
 #!/bin/sh
 
-xlen="$(readelf -h $1 | grep 'Class' | cut -d: -f 2 | xargs echo | sed 's/^ELF//')"
-arch="${ARCH_STR#*=}"
-spike \
-    --isa=${arch} \
-    ${PK_PATH}/pk${xlen} "$@"
+xlen="$(march-to-cpu-opt --elf-file-path $1 --print-xlen)"
+isa="$(march-to-cpu-opt --elf-file-path $1 --print-spike-isa)"
+varch="$(march-to-cpu-opt --elf-file-path $1 --print-spike-varch)"
+
+[[ ${isa} != *_zicclsm* ]] && isa="${isa}_zicclsm"
+
+isa_option="--isa=${isa}"
+
+# The Spike version we build in CI does not accept --varch. Passing it makes
+# RVV execution tests fail before the test binary even runs.
+spike ${isa_option} ${PK_PATH}/pk${xlen} "$@"

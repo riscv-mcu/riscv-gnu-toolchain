@@ -257,9 +257,6 @@ all: stamps/build-llvm-@default_target@
 newlib: stamps/build-llvm-newlib
 linux: stamps/build-llvm-linux
 musl: stamps/build-llvm-musl
-ifeq (@multilib_flags@,--enable-multilib)
-$(error "Setting multilib flags for LLVM builds is not supported.")
-endif
 endif
 
 .PHONY: build-binutils build-gdb build-gcc1 build-libc build-gcc2 build-qemu build-llvm

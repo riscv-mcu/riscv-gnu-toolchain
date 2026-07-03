@@ -56,6 +56,14 @@ AS_IF([test "x$enable_debug_info" = xyes],
 	[AC_SUBST(debug_info, "-g")],
 	[AC_SUBST(debug_info, "")])
 
+AC_ARG_ENABLE(strip,
+	[AS_HELP_STRING([--enable-strip],
+		[Strip debug symbols at install time])])
+
+AS_IF([test "x$enable_strip" = xyes],
+	[AC_SUBST(install_target, install-strip)],
+	[AC_SUBST(install_target, install)])
+
 AC_ARG_ENABLE(default-pie,
 	[AS_HELP_STRING([--enable-default-pie],
 		[build linux toolchain with default PIE @<:@--enable-default-pie@:>@])])
@@ -123,7 +131,6 @@ AS_IF([test "x$with_abi" = xdefault],
 
 AC_SUBST(WITH_ARCH, --with-arch=$with_arch)
 AC_SUBST(WITH_ABI, --with-abi=$with_abi)
-AC_SUBST(WITH_TUNE, --with-tune=$with_tune)
 AC_SUBST(WITH_ISA_SPEC, --with-isa-spec=$with_isa_spec)
 AC_SUBST(WITH_SIM, $with_sim)
 AC_SUBST(WITH_LANGUAGES, $with_languages)

@@ -1385,7 +1385,6 @@ report-gdb-linux: stamps/check-gdb-linux
 	if find build-gdb-linux -iname '*.sum' | xargs grep ^FAIL | sort | grep -F -v $(patsubst %,--file=$(srcdir)/test/gdb-linux/%.log,$(GLIBC_MULTILIB_NAMES)); then false; else true; fi
 
 distclean: clean
-    rm -rf src
 
 # All of the packages install themselves, so our install target does nothing.
 install:

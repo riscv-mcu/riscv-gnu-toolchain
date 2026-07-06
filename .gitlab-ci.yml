@@ -26,8 +26,8 @@ workflow:
 
 stages:
   - prepare
-  - build
   - test
+  - build
   - deploy
 
 prepare_source:
@@ -117,6 +117,9 @@ prepare_source:
   needs:
     - job: prepare_source
       artifacts: true
+    # gate build on testsuite success: build only runs if tests passed
+    - job: test_newlib_report
+      artifacts: false
   variables:
     GIT_STRATEGY: none
   artifacts:
@@ -244,9 +247,9 @@ build_windows:
 
 ## Job for testsuite (gcc newlib report) on rv32gc/rv64gc
 # Run ./configure + make report-newlib for each arch/abi, upload testsuite
-# results as artifacts (always, even on failure), and gate deploy on success.
+# results as artifacts (always, even on failure), and gate build/deploy on success.
 test_newlib_report:
-  stage: build
+  stage: test
   image: $IMGSVR/$TESTIMG:$IMGTAG
   timeout: 6h
   interruptible: true
@@ -267,7 +270,7 @@ test_newlib_report:
       - ciarch: rv64gc
         ciabi: lp64d
   script:
-    - echo "INFO: Build and test toolchain for $ciarch/$ciabi"
+    - 'echo "INFO: Build and test toolchain for $ciarch/$ciabi"'
     # configure toolchain (builds nothing yet, just generates Makefile)
     - ./configure --prefix=$(pwd)/build-toolchain-out --with-arch=$ciarch --with-abi=$ciabi --with-sim=spike --with-cmodel=medlow --with-isa-spec=20191213 --with-tune=rocket
     # build + check + report-newlib (testsuite-filter exits non-zero on unexpected fails)
@@ -283,9 +286,13 @@ test_newlib_report:
     when: always
     paths:
       # test results (always uploaded, even on failure)
-      - build-gcc-newlib-stage2/gcc/testsuite/**/*.sum
-      - build-gcc-newlib-stage2/gcc/testsuite/**/*.log
-      - build-gcc-newlib-stage2/gcc/testsuite/**/*.sum.bak
+      - build-gcc-newlib-stage2/gcc/testsuite/gcc/*.sum
+      - build-gcc-newlib-stage2/gcc/testsuite/gcc/*.log
+      - build-gcc-newlib-stage2/gcc/testsuite/g++/*.sum
+      - build-gcc-newlib-stage2/gcc/testsuite/g++/*.log
+      - build-gcc-newlib-stage2/gcc/testsuite/gfortran/*.sum
+      - build-gcc-newlib-stage2/gcc/testsuite/gfortran/*.log
+      - build-gcc-newlib-stage2/gcc/testsuite/*/gcc.sum.bak
       # configure/build logs
       - report-*.log
       - config.log

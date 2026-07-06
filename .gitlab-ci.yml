@@ -242,6 +242,60 @@ build_windows:
     - buildsts=${PIPESTATUS[0]}
     - exit $buildsts
 
+## Job for testsuite (gcc newlib report) on rv32gc/rv64gc
+# Run ./configure + make report-newlib for each arch/abi, upload testsuite
+# results as artifacts (always, even on failure), and gate deploy on success.
+test_newlib_report:
+  stage: build
+  image: $IMGSVR/$TESTIMG:$IMGTAG
+  timeout: 6h
+  interruptible: true
+  retry:
+    max: 2
+    when:
+      # ERROR: Job failed (system failure): Cannot connect to the Docker daemon
+      - runner_system_failure
+  needs:
+    - job: prepare_source
+      artifacts: true
+  variables:
+    GIT_STRATEGY: none
+  parallel:
+    matrix:
+      - ciarch: rv32gc
+        ciabi: ilp32d
+      - ciarch: rv64gc
+        ciabi: lp64d
+  script:
+    - echo "INFO: Build and test toolchain for $ciarch/$ciabi"
+    # configure toolchain (builds nothing yet, just generates Makefile)
+    - ./configure --prefix=$(pwd)/build-toolchain-out --with-arch=$ciarch --with-abi=$ciabi --with-sim=spike --with-cmodel=medlow --with-isa-spec=20191213 --with-tune=rocket
+    # build + check + report-newlib (testsuite-filter exits non-zero on unexpected fails)
+    - make report-newlib -j8 2>&1 | tee report-${ciarch}-${ciabi}.log
+    - buildsts=${PIPESTATUS[0]}
+    - |
+        echo "=== testsuite-filter summary ==="
+        python3 scripts/testsuite-filter gcc newlib test/allowlist \
+          $(find build-gcc-newlib-stage2/gcc/testsuite/ -name "*.sum" | paste -sd "," -) 2>&1 | tail -20 || true
+    - exit $buildsts
+  artifacts:
+    name: "testsuite_${ciarch}_${ciabi}-${CI_COMMIT_SHA::8}"
+    when: always
+    paths:
+      # test results (always uploaded, even on failure)
+      - build-gcc-newlib-stage2/gcc/testsuite/**/*.sum
+      - build-gcc-newlib-stage2/gcc/testsuite/**/*.log
+      - build-gcc-newlib-stage2/gcc/testsuite/**/*.sum.bak
+      # configure/build logs
+      - report-*.log
+      - config.log
+      - config.status
+    expire_in: 1 week
+  tags:
+    - env::docker
+    - build::toolchain
+    - host::whss4
+
 # clean up build directories and build installed toolchains
 cleanbuild:
   # don't need full toolchain source code
@@ -276,6 +330,9 @@ release:
     - job: prepare_source
       artifacts: false
     - job: build_linux
+      artifacts: false
+    # gate deploy on testsuite success: if test_newlib_report fails, release is skipped
+    - job: test_newlib_report
       artifacts: false
   when: on_success
   interruptible: true

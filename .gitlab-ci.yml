@@ -274,7 +274,7 @@ test_newlib_report:
     # configure toolchain (builds nothing yet, just generates Makefile)
     - ./configure --prefix=$(pwd)/build-toolchain-out --with-arch=$ciarch --with-abi=$ciabi --with-sim=spike --with-cmodel=medlow --with-isa-spec=20191213 --with-tune=rocket
     # build + check + report-newlib (testsuite-filter exits non-zero on unexpected fails)
-    - make report-newlib -j8 2>&1 | tee report-${ciarch}-${ciabi}.log
+    - make report-newlib -j2 2>&1 | tee report-${ciarch}-${ciabi}.log
     - buildsts=${PIPESTATUS[0]}
     - |
         echo "=== testsuite-filter summary ==="

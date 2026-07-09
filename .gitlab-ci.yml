@@ -275,8 +275,21 @@ test_newlib_report:
     - 'echo "INFO: Build and test toolchain for $ciarch/$ciabi"'
     # configure toolchain (builds nothing yet, just generates Makefile)
     - ./configure --prefix=$(pwd)/build-toolchain-out --with-arch=$ciarch --with-abi=$ciabi --with-sim=spike --with-cmodel=medlow --with-isa-spec=20191213 --with-tune=rocket
-    # build + check + report-newlib (testsuite-filter exits non-zero on unexpected fails)
-    - make report-newlib -j2 2>&1 | tee report-${ciarch}-${ciabi}.log
+    # step 1: build gcc (stage1 + newlib + stage2 + gdb), high parallelism
+    - make newlib -j$JOBS 2>&1 | tee build-gcc-${ciarch}-${ciabi}.log
+    - buildgcc=${PIPESTATUS[0]}
+    - 'if [ $buildgcc -ne 0 ]; then echo "ERROR: gcc build failed"; exit $buildgcc; fi'
+    # step 2: build sim (spike + pk for --with-sim=spike), high parallelism
+    - make build-sim -j$JOBS 2>&1 | tee build-sim-${ciarch}-${ciabi}.log
+    - buildsim=${PIPESTATUS[0]}
+    - 'if [ $buildsim -ne 0 ]; then echo "ERROR: sim build failed"; exit $buildsim; fi'
+    # step 3: build dejagnu (test framework), high parallelism (pure host tool)
+    - make stamps/build-dejagnu -j$JOBS 2>&1 | tee build-dejagnu-${ciarch}-${ciabi}.log
+    - builddejagnu=${PIPESTATUS[0]}
+    - 'if [ $builddejagnu -ne 0 ]; then echo "ERROR: dejagnu build failed"; exit $builddejagnu; fi'
+    # step 4: run testsuite (check + testsuite-filter), low parallelism
+    # (-j2: dejagnu is I/O and sim heavy, high -j causes resource contention)
+    - make report-newlib -j$JOBS 2>&1 | tee report-${ciarch}-${ciabi}.log
     - buildsts=${PIPESTATUS[0]}
     - |
         echo "=== testsuite-filter summary ==="
@@ -297,6 +310,9 @@ test_newlib_report:
       - build-gcc-newlib-stage2/gcc/testsuite/*/gcc.sum.bak
       # configure/build logs
       - report-*.log
+      - build-gcc-*.log
+      - build-sim-*.log
+      - build-dejagnu-*.log
       - config.log
       - config.status
     expire_in: 1 week
@@ -331,12 +347,25 @@ test_binutils_report:
         ciabi: lp64d
   script:
     - 'echo "INFO: Build and test binutils for $ciarch/$ciabi"'
-    # configure toolchain (generates Makefile; report-binutils also builds
-    # gcc stage2 + spike + pk as dependencies of check-binutils-newlib)
+    # configure toolchain (generates Makefile)
     - ./configure --prefix=$(pwd)/build-toolchain-out --with-arch=$ciarch --with-abi=$ciabi --with-sim=spike --with-cmodel=medlow --with-isa-spec=20191213 --with-tune=rocket
-    # build + check + report-binutils (testsuite-filter exits non-zero on unexpected fails;
-    # check-binutils-newlib has || true so make won't abort on known failures)
-    - make report-binutils -j2 2>&1 | tee report-binutils-${ciarch}-${ciabi}.log
+    # step 1: build gcc (stage1 + newlib + stage2 + gdb, also builds binutils),
+    # high parallelism
+    - make newlib -j$JOBS 2>&1 | tee build-gcc-${ciarch}-${ciabi}.log
+    - buildgcc=${PIPESTATUS[0]}
+    - 'if [ $buildgcc -ne 0 ]; then echo "ERROR: gcc build failed"; exit $buildgcc; fi'
+    # step 2: build sim (spike + pk for --with-sim=spike), high parallelism
+    - make build-sim -j$JOBS 2>&1 | tee build-sim-${ciarch}-${ciabi}.log
+    - buildsim=${PIPESTATUS[0]}
+    - 'if [ $buildsim -ne 0 ]; then echo "ERROR: sim build failed"; exit $buildsim; fi'
+    # step 3: build dejagnu (test framework), high parallelism (pure host tool)
+    - make stamps/build-dejagnu -j$JOBS 2>&1 | tee build-dejagnu-${ciarch}-${ciabi}.log
+    - builddejagnu=${PIPESTATUS[0]}
+    - 'if [ $builddejagnu -ne 0 ]; then echo "ERROR: dejagnu build failed"; exit $builddejagnu; fi'
+    # step 4: run binutils testsuite (check + testsuite-filter), low parallelism
+    # (-j2: dejagnu is I/O and sim heavy; check-binutils-newlib has || true so
+    # make won't abort on known failures)
+    - make report-binutils -j$JOBS 2>&1 | tee report-binutils-${ciarch}-${ciabi}.log
     - buildsts=${PIPESTATUS[0]}
     - |
         echo "=== binutils testsuite-filter summary ==="
@@ -356,6 +385,9 @@ test_binutils_report:
       - build-binutils-newlib/binutils/*.log
       # configure/build logs
       - report-binutils-*.log
+      - build-gcc-*.log
+      - build-sim-*.log
+      - build-dejagnu-*.log
       - config.log
       - config.status
     expire_in: 1 week

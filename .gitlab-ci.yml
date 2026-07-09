@@ -120,6 +120,8 @@ prepare_source:
     # gate build on testsuite success: build only runs if tests passed
     - job: test_newlib_report
       artifacts: false
+    - job: test_binutils_report
+      artifacts: false
   variables:
     GIT_STRATEGY: none
   artifacts:
@@ -303,6 +305,65 @@ test_newlib_report:
     - build::toolchain
     - host::whss4
 
+## Job for testsuite (binutils report) on rv32gc/rv64gc
+# Run ./configure + make report-binutils for each arch/abi, upload binutils test
+# results as artifacts (always, even on failure), and gate build/deploy on success.
+test_binutils_report:
+  stage: test
+  image: $IMGSVR/$TESTIMG:$IMGTAG
+  timeout: 6h
+  interruptible: true
+  retry:
+    max: 2
+    when:
+      # ERROR: Job failed (system failure): Cannot connect to the Docker daemon
+      - runner_system_failure
+  needs:
+    - job: prepare_source
+      artifacts: true
+  variables:
+    GIT_STRATEGY: none
+  parallel:
+    matrix:
+      - ciarch: rv32gc
+        ciabi: ilp32d
+      - ciarch: rv64gc
+        ciabi: lp64d
+  script:
+    - 'echo "INFO: Build and test binutils for $ciarch/$ciabi"'
+    # configure toolchain (generates Makefile; report-binutils also builds
+    # gcc stage2 + spike + pk as dependencies of check-binutils-newlib)
+    - ./configure --prefix=$(pwd)/build-toolchain-out --with-arch=$ciarch --with-abi=$ciabi --with-sim=spike --with-cmodel=medlow --with-isa-spec=20191213 --with-tune=rocket
+    # build + check + report-binutils (testsuite-filter exits non-zero on unexpected fails;
+    # check-binutils-newlib has || true so make won't abort on known failures)
+    - make report-binutils -j2 2>&1 | tee report-binutils-${ciarch}-${ciabi}.log
+    - buildsts=${PIPESTATUS[0]}
+    - |
+        echo "=== binutils testsuite-filter summary ==="
+        python3 scripts/testsuite-filter binutils newlib test/allowlist \
+          $(find build-binutils-newlib/ -name "*.sum" | paste -sd "," -) 2>&1 | tail -20 || true
+    - exit $buildsts
+  artifacts:
+    name: "testsuite_binutils_${ciarch}_${ciabi}-${CI_COMMIT_SHA::8}"
+    when: always
+    paths:
+      # binutils test results (always uploaded, even on failure)
+      - build-binutils-newlib/ld/*.sum
+      - build-binutils-newlib/ld/*.log
+      - build-binutils-newlib/gas/*.sum
+      - build-binutils-newlib/gas/*.log
+      - build-binutils-newlib/binutils/*.sum
+      - build-binutils-newlib/binutils/*.log
+      # configure/build logs
+      - report-binutils-*.log
+      - config.log
+      - config.status
+    expire_in: 1 week
+  tags:
+    - env::docker
+    - build::toolchain
+    - host::whss4
+
 # clean up build directories and build installed toolchains
 cleanbuild:
   # don't need full toolchain source code
@@ -338,8 +399,10 @@ release:
       artifacts: false
     - job: build_linux
       artifacts: false
-    # gate deploy on testsuite success: if test_newlib_report fails, release is skipped
+    # gate deploy on testsuite success: if any test job fails, release is skipped
     - job: test_newlib_report
+      artifacts: false
+    - job: test_binutils_report
       artifacts: false
   when: on_success
   interruptible: true

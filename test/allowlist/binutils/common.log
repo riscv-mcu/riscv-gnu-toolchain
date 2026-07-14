@@ -1,1 +1,25 @@
-#
+# common binutils allowlist - applied to all arch/abi/libc combinations
+# ld-riscv-elf attr-merge tests: known failures (see testsuite-filter, exact line match)
+FAIL: ld-riscv-elf/attr-merge-arch-01
+FAIL: ld-riscv-elf/attr-merge-arch-02
+FAIL: ld-riscv-elf/attr-merge-arch-03
+FAIL: ld-riscv-elf/attr-merge-user-ext-01
+# objdump version difference: -D disassembles data as .insn instead of .word
+FAIL: gas/riscv/dis-data
+# zicsr/zifencei imply rule difference under misa-spec=20191213
+FAIL: gas/riscv/imply-zicsr-zifencei-i2p1-misa-spec-20191213
+# imply chain symbol table: svbare over-implies zifencei (version difference)
+FAIL: gas/riscv/imply
+# mapping symbols over-imply zicsr/zifencei under misa-spec=20191213 (same root cause as imply)
+FAIL: gas/riscv/mapping-symbols
+# zicsr implied -> csrr disassembled + arch attr over-implies zicsr/zifencei (same root cause)
+FAIL: gas/riscv/option-arch-dis
+# arch attribute over-implies zicsr/zifencei (same root cause as imply)
+FAIL: gas/riscv/attribute-08
+FAIL: gas/riscv/attribute-09
+# nuclei binutils riscv_insn_length() reuses 0x7f encoding for DSP (returns 4),
+# conflicting with insn.s/.d which test 0x7f as 80-176bit instructions (10-22 bytes)
+FAIL: gas/riscv/insn
+FAIL: gas/riscv/insn-na
+# insn-dwarf.d uses -march=rv64ifc (no V) on insn.s; shares the insn.s root cause
+FAIL: Dwarf line number info for .insn

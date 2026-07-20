@@ -622,3 +622,14 @@ UNRESOLVED: gcc.target/riscv/shorten-memrefs-5.c
 UNRESOLVED: gcc.target/riscv/shorten-memrefs-8.c
 UNRESOLVED: g++.dg/vect/pr115278.cc
 FAIL: g++.dg/modules/bad-mapper-3.C
+# gcc-14 xxlczbitop: extract/extractu/ff1/fl1 not generated (clzsi2/ctzsi2 gate
+# missing TARGET_XXLCZBITOP; extract uses unspec, no standard pattern match)
+FAIL: gcc.target/riscv/xxlcz-bitmanip.c
+# gcc-14 xxlczbitop: xl.extract/extractu not generated (extract uses unspec,
+# no standard (and (lshiftrt) mask) pattern match), same as bitmanip.c
+FAIL: gcc.target/riscv/xxlcz-bitop.c
+# zfbfmin: df->bf conversion path differs (nuclei xxlfbf truncdfbf2 affects
+# standard zfbfmin libcall path), call __truncdfsf2 + fcvt.bf16.s not generated
+FAIL: gcc.target/riscv/zfbfmin-bf16_float_libcall_convert.c
+# movqi-1: stack offset/instruction differs from gcc-16 expectation (sw zero,12(sp))
+FAIL: gcc.target/riscv/rvv/base/movqi-1.c

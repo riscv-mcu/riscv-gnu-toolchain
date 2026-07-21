@@ -60,9 +60,16 @@ echo "INFO: configure toolchain"
     --with-sim="$SIM" --with-cmodel="$CMODEL" \
     --with-isa-spec="$ISASPEC" --with-tune="$TUNE"
 
+# ABI is only needed for ./configure --with-abi above. Unset it before make:
+# GCC's bundled GMP configure reads the ABI env var (expecting "standard"/"32"/"64")
+# and our ABI=ilp32d/lp64d would make it fail with "ABI=ilp32d is not a valid choice".
+# Keep the value in RVABI for log filenames below.
+RVABI="$ABI"
+unset ABI
+
 # --- step 2: build gcc (stage1 + newlib + stage2 + gdb) ---
 echo "INFO: build gcc (make newlib -j$JOBS)"
-make newlib -j"$JOBS" 2>&1 | tee build-gcc-"$ARCH"-"$ABI".log
+make newlib -j"$JOBS" 2>&1 | tee build-gcc-"$ARCH"-"$RVABI".log
 buildgcc=${PIPESTATUS[0]}
 if [ $buildgcc -ne 0 ]; then
     echo "ERROR: gcc build failed"
@@ -71,7 +78,7 @@ fi
 
 # --- step 3: build sim (spike + pk for --with-sim=spike) ---
 echo "INFO: build sim (make build-sim -j$JOBS)"
-make build-sim -j"$JOBS" 2>&1 | tee build-sim-"$ARCH"-"$ABI".log
+make build-sim -j"$JOBS" 2>&1 | tee build-sim-"$ARCH"-"$RVABI".log
 buildsim=${PIPESTATUS[0]}
 if [ $buildsim -ne 0 ]; then
     echo "ERROR: sim build failed"
@@ -80,7 +87,7 @@ fi
 
 # --- step 4: build dejagnu (test framework) ---
 echo "INFO: build dejagnu (make stamps/build-dejagnu -j$JOBS)"
-make stamps/build-dejagnu -j"$JOBS" 2>&1 | tee build-dejagnu-"$ARCH"-"$ABI".log
+make stamps/build-dejagnu -j"$JOBS" 2>&1 | tee build-dejagnu-"$ARCH"-"$RVABI".log
 builddejagnu=${PIPESTATUS[0]}
 if [ $builddejagnu -ne 0 ]; then
     echo "ERROR: dejagnu build failed"
@@ -94,18 +101,18 @@ fi
 
 # --- step 5: run gcc testsuite ---
 echo "INFO: run gcc testsuite (make report-newlib -j$JOBS)"
-make report-newlib -j"$JOBS" 2>&1 | tee report-newlib-"$ARCH"-"$ABI".log
+make report-newlib -j"$JOBS" 2>&1 | tee report-newlib-"$ARCH"-"$RVABI".log
 newlibsts=${PIPESTATUS[0]}
 
 # --- step 6: run binutils testsuite ---
 echo "INFO: run binutils testsuite (make report-binutils -j$JOBS)"
-make report-binutils -j"$JOBS" 2>&1 | tee report-binutils-"$ARCH"-"$ABI".log
+make report-binutils -j"$JOBS" 2>&1 | tee report-binutils-"$ARCH"-"$RVABI".log
 binutilssts=${PIPESTATUS[0]}
 
 # --- print both testsuite-filter summaries together for easy comparison ---
 echo ""
 echo "============================================================"
-echo "             Testsuite Summary for $ARCH/$ABI"
+echo "             Testsuite Summary for $ARCH/$RVABI"
 echo "============================================================"
 echo "=== gcc testsuite-filter summary ==="
 python3 scripts/testsuite-filter gcc newlib test/allowlist \

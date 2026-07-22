@@ -8,7 +8,7 @@ rm -f $saveenv
 touch $saveenv
 for enval in TOOLTYPE TOOLHOST TOOLVER MULTILIBGEN DOMULTILIB \
     DOCONF DOSTRIP DOLLVM DOBUILD DOARCHIVE DOLIBNCRT DOLIBDEBUG \
-    LIBNCRTBLDCFG DODOC DOCLEAN DEFRVCFG JOBS DOREBUILD ; do
+    LIBNCRTBLDCFG DODOC DOCLEAN DEFRVCFG DOPYTHON JOBS DOREBUILD ; do
     # save environment variable
     echo "$enval=\"`printenv $enval`"\" >> $saveenv
 done

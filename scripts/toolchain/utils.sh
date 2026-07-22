@@ -473,6 +473,81 @@ function strip_toolchain() {
     popd
 }
 
+function install_runtime_bundle() {
+    echo "INFO: Install runtime bundle to $toolprefix/lib"
+    mkdir -p $toolprefix/lib
+    if [[ "$toolhost" == "win64" ]] ; then
+        # Bundle Windows runtime DLLs alongside gdb binary
+        # Windows finds python38.dll, Lib/ and DLLs/ in the same directory
+        if [ "x$dopython" == "x1" ] ; then
+            PYTHON_PREFIX=/opt/nuclei/python38
+            if [ -f "$PYTHON_PREFIX/python38.dll" ] ; then
+                echo "INFO:   Bundling python38.dll and related files"
+                cp -f $PYTHON_PREFIX/python38.dll $toolprefix/bin/
+                cp -f $PYTHON_PREFIX/python3.dll $toolprefix/bin/
+                cp -f $PYTHON_PREFIX/vcruntime140.dll $toolprefix/bin/
+                cp -f $PYTHON_PREFIX/vcruntime140_1.dll $toolprefix/bin/
+                # Copy standard library and extension modules from NuGet package
+                cp -rf $PYTHON_PREFIX/Lib $toolprefix/bin/
+                cp -rf $PYTHON_PREFIX/DLLs $toolprefix/bin/
+            else
+                echo "WARN: python38.dll not found in $PYTHON_PREFIX, skip python bundle!"
+            fi
+        fi
+    else
+        # Linux bundle logic (existing)
+        # Bundle runtime libs from the build environment (CentOS 7 with devtoolset-9, rh-python38)
+        # These are bundled so gdb and its Python C extensions can run on other Linux distros
+        # without needing these libs to be installed on the target system.
+        for lib in libncursesw.so.5 libtinfo.so.5 libffi.so.6 libsqlite3.so.0 libpanelw.so.5 libreadline.so.6 ; do
+            local src=$(find /lib64 /usr/lib64 /usr/lib -name "$lib" -maxdepth 3 2>/dev/null | head -1)
+            if [ -f "$src" ] ; then
+                cp -Lf "$src" $toolprefix/lib/
+                echo "INFO:   Bundled $lib"
+            fi
+        done
+        # Set RUNPATH on bundled .so files so they can find each other
+        for lib in $toolprefix/lib/*.so* ; do
+            if [ -f "$lib" ] && [ -x "$lib" ] ; then
+                patchelf --set-rpath '$ORIGIN' "$lib" 2>/dev/null || true
+            fi
+        done
+        # Bundle python libs if python support is enabled
+        if [ "x$dopython" == "x1" ] ; then
+            local pyrun=$PYTHON_PREFIX/bin/python3
+            if [ ! -f $pyrun ] ; then
+                echo "WARN: Python3 not found in $PYTHON_PREFIX, skip python bundle!"
+            else
+                cp -f $PYTHON_PREFIX/lib/libpython3.8.so.1.0 $toolprefix/lib/
+                cp -f $PYTHON_PREFIX/lib/libpython3.8.so $toolprefix/lib/
+                cp -rf $PYTHON_PREFIX/lib/python3.8 $toolprefix/lib/python3.8
+            fi
+        fi
+        # Set RUNPATH on gdb, run, and other binaries to find bundled libs
+        for bin in $(ls $toolprefix/bin/*-gdb $toolprefix/bin/*-run 2>/dev/null) ; do
+            if [ -f "$bin" ] && which patchelf > /dev/null 2>&1 ; then
+                echo "INFO: Set RUNPATH on $bin to find bundled libs"
+                patchelf --set-rpath '$ORIGIN/../lib' $bin
+            fi
+        done
+        if [ "x$dopython" == "x1" ] ; then
+            local libpython=$toolprefix/lib/libpython3.8.so.1.0
+            if [ -f "$libpython" ] && which patchelf > /dev/null 2>&1 ; then
+                echo "INFO: Set RUNPATH on $libpython for bundled libs"
+                patchelf --set-rpath '$ORIGIN' $libpython
+            fi
+            local dynload_dir=$toolprefix/lib/python3.8/lib-dynload
+            if [ -d "$dynload_dir" ] ; then
+                for f in $dynload_dir/*.so ; do
+                    [ -f "$f" ] && patchelf --set-rpath '$ORIGIN/../..' "$f"
+                done
+                echo "INFO: Set RUNPATH on Python C extensions for bundled libs"
+            fi
+        fi
+    fi
+    echo "INFO: Runtime bundle installed to $toolprefix/lib"
+}
+
 function show_toolchain() {
     local basedir=$(readlink -f ${toolbasedir})
 

@@ -22,6 +22,7 @@ SCRIPTDIR=$(readlink -f $SCRIPTDIR)
 # LIBNCRTBLDCFG: libncrt build config, default riscv64-unknown-elf
 # DOARCHIVE: archive built toolchain and its source code, default no
 # DEFRVCFG: default riscv configuration such arch/abi/tune/isa-spec configure when build gcc
+# DOPYTHON: enable python support for GDB, 0 or 1, default 0
 # JOBS: build jobs, default 16
 tooltype=${TOOLTYPE:-newlibc}
 toolhost=${TOOLHOST:-}
@@ -41,6 +42,7 @@ dodoc=${DODOC:-0}
 doclean=${DOCLEAN:-}
 docleanprefix=${DOCLEANPREFIX:-}
 defrvcfg=${DEFRVCFG:-"--with-arch=rv64imc --with-abi=lp64"}
+dopython=${DOPYTHON:-0}
 jobs=${JOBS:-16}
 
 # command arguments
@@ -102,23 +104,44 @@ if [ "x$dodoc" == "x1" ] ; then
     confopts="--enable-doc $confopts"
 fi
 
+if [ "x$dopython" == "x1" ] ; then
+    if [ "x$toolhost" == "xlinux64" ] ; then
+        PYTHON_PREFIX=/opt/nuclei/python38
+        echo "INFO: Enable GDB python support with $PYTHON_PREFIX (linux host)"
+        confopts="--with-python=$PYTHON_PREFIX/bin/python3 $confopts"
+        # --with-python-libdir and LDFLAGS are passed via GDB_TARGET_FLAGS_EXTRA
+        # so they go directly to gdb's configure, not the top-level configure
+        export GDB_TARGET_FLAGS_EXTRA="--with-python-libdir=${toolprefix}/lib LDFLAGS=\"-L${PYTHON_PREFIX}/lib -Wl,--enable-new-dtags,-rpath,${toolprefix}/lib\""
+    elif [ "x$toolhost" == "xwin64" ] ; then
+        PYTHON_PREFIX=/opt/nuclei/python38
+        echo "INFO: Enable GDB python support with $PYTHON_PREFIX (windows host)"
+        confopts="--with-python=${PYTHON_PREFIX}/python-config-mingw.sh $confopts"
+    else
+        echo "WARN: GDB python support only available for linux64 and win64 host, skip!"
+        dopython=0
+    fi
+fi
+
 if [ "x$dolibdebug" == "x1" ] ; then
     echo "INFO: Enable build library such as newlibc/glibc with debug information"
     confopts="--enable-debug-info $confopts"
 fi
 
-if [[ ! "$confopts" =~ "--with-multilib-generator" ]] ; then
-    if [ "x$multilibgen" != "x" ] ; then
+# Handle multilib configuration
+# Priority: 1) DOMULTILIB=0 disables multilib; 2) confopts has --with-multilib-generator;
+#           3) MULTILIBGEN env var; 4) default multilib
+if [ "x$domultilib" == "x1" ] ; then
+    if [[ "$confopts" =~ "--with-multilib-generator" ]] ; then
+        echo "INFO: multilib-generator configuration present in passed configure options!"
+    elif [ "x$multilibgen" != "x" ] ; then
         echo "INFO: Enable multilib generator of $multilibgen"
         confopts="$confopts --enable-multilib --with-multilib-generator=$multilibgen"
-    elif [ "x$domultilib" == "x1" ] ; then
+    else
         echo "INFO: Enable multilib build with default multilib configuration"
         confopts="$confopts --enable-multilib"
-    else
-        echo "INFO: Disable multilib build"
     fi
 else
-    echo "INFO: multilib-generator configuration present in passed configure options!"
+    echo "INFO: Disable multilib build"
 fi
 
 if [[ ! "$confopts" =~ "--with-arch=" ]] && [[ "x$defrvcfg" =~ "--with-arch=" ]] ; then
@@ -199,6 +222,12 @@ if [ "x$tooltype" == "xnewlibc" ] && [ "x$dolibncrt" == "x1" ] && [ "x$dosuc" ==
     else
         echo "WARN: Toolchain is not built, will not build nuclei c runtime library!"
     fi
+fi
+
+# Install runtime bundle (runtime libs and python if enabled), for linux and windows host
+if [ "x$dosuc" == "x0" ] ; then
+    echo "INFO: Install runtime bundle to $toolprefix"
+    install_runtime_bundle
 fi
 
 collect_build_logfiles logs

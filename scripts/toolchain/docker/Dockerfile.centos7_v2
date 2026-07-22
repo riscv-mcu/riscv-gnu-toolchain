@@ -1,0 +1,59 @@
+# Dockerfile for building Python 3.8 with standard SONAME
+# Built on top of the existing gnutoolchain-centos7 image
+# Python will be installed to /opt/nuclei/python38
+#
+# Usage:
+#   podman build -t gnutoolchain-centos7:v2 -f Dockerfile.centos7_v2 .
+#
+# Then use it to build the toolchain:
+#   podman run --rm -it gnutoolchain-centos7:v2 bash
+#   cd /work && DOPYTHON=1 ./scripts/toolchain/build.sh
+
+FROM rego.corp.nucleisys.com/software/gnutoolchain-centos7:latest
+
+ARG PYTHON_VERSION=3.8.10
+ARG PYTHON_URL=https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tar.xz
+ARG PYTHON_PREFIX=/opt/nuclei/python38
+
+# Install build dependencies for Python 3.8
+# libffi-devel is needed for _ctypes module
+# sqlite-devel is needed for sqlite3 module
+# tk-devel is optional (for tkinter), skip to reduce dependencies
+# Fix http://opensource.wandisco.com/rhel/7/git/x86_64/repodata/repomd.xml: [Errno 14] curl#6 - "Could not resolve host: opensource.wandisco.com; Unknown error"
+RUN yum-config-manager --disable WANdisco-git && yum update -y && yum install -y epel-release && yum install -y \
+    wget \
+    make \
+    sqlite-devel \
+    libffi-devel \
+    patchelf \
+    && yum clean all
+
+# Build Python 3.8 with standard SONAME (libpython3.8.so.1.0)
+# Python 3.8 itself only needs C99, but devtoolset-9 is available in the base image
+RUN scl enable devtoolset-9 -- bash -c " \
+    set -ex && \
+    cd /tmp && \
+    wget -q ${PYTHON_URL} && \
+    tar xf Python-${PYTHON_VERSION}.tar.xz && \
+    cd Python-${PYTHON_VERSION} && \
+    ./configure --enable-shared \
+        --prefix=${PYTHON_PREFIX} \
+        --with-openssl=/usr \
+        --enable-optimizations && \
+    make -j\$(nproc) && \
+    make install && \
+    echo '=== Verify SONAME ===' && \
+    readelf -d ${PYTHON_PREFIX}/lib/libpython3.8.so | grep SONAME && \
+    echo '=== Set RPATH on python3 binary ===' && \
+    patchelf --set-rpath ${PYTHON_PREFIX}/lib ${PYTHON_PREFIX}/bin/python3.8 && \
+    echo '=== Verify Python version ===' && \
+    ${PYTHON_PREFIX}/bin/python3 --version && \
+    cd /tmp && \
+    rm -rf Python-${PYTHON_VERSION} Python-${PYTHON_VERSION}.tar.xz \
+"
+
+# Verify the built Python works correctly
+RUN ${PYTHON_PREFIX}/bin/python3 -c 'import sys; print(f"Python {sys.version}"); import sqlite3; print("sqlite3 module: OK"); import ctypes; print("ctypes module: OK"); import zlib; print("zlib module: OK")'
+
+# Default command
+CMD ["/bin/bash"]

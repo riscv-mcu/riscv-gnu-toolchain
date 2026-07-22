@@ -33,6 +33,8 @@ DODOC=1
 DOCLEAN=1
 # clean install prefix directory before toolchain build, 0 or 1
 DOCLEANPREFIX=1
+# enable python support for GDB, 0 or 1, e.g. DOPYTHON=1
+DOPYTHON=1
 # default arch/abi/isaspec/tune configuration
 # glibc need atomic extension, so default changed to rv64ima
 DEFRVCFG="--with-arch=rv64ima --with-abi=lp64"

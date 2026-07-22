@@ -13,7 +13,7 @@ variables:
   # centos 6 is EOL, use centos 7
   LINBUILDIMG: "gnutoolchain-centos7"
   WINBUILDIMG: "gnutoolchain-ubuntu20.04"
-  IMGTAG: "latest"
+  IMGTAG: "v2"
   JOBS: 32
 
 workflow:

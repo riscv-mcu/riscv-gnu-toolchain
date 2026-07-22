@@ -1,0 +1,53 @@
+# Dockerfile for bundling Windows Python 3.8 development files
+# Built on top of the existing gnutoolchain-ubuntu20.04 image
+# Windows Python will be installed to /opt/nuclei/python38
+#
+# Usage:
+#   podman build -t gnutoolchain-ubuntu20.04:v2 -f Dockerfile.ubuntu20.04_v2 .
+#
+# Then use it to build the toolchain for Windows:
+#   podman run --rm -it gnutoolchain-ubuntu20.04:v2 bash
+#   cd /work && DOPYTHON=1 ./scripts/toolchain/build.sh
+
+FROM rego.corp.nucleisys.com/software/gnutoolchain-ubuntu20.04:latest
+
+ARG PYTHON_VERSION=3.8.10
+ARG PYTHON_PREFIX=/opt/nuclei/python38
+
+# Download and extract Windows Python 3.8 from NuGet package
+# NuGet package contains everything needed for cross-compilation:
+#   include/  - Python.h and other headers
+#   libs/     - python38.lib import library for MinGW linking
+#   DLLs/     - .pyd C extension modules
+#   python38.dll, python.exe, etc.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget unzip p7zip-full && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p ${PYTHON_PREFIX} && \
+    wget -q https://www.nuget.org/api/v2/package/python/${PYTHON_VERSION} -O /tmp/nuget.zip && \
+    7z x /tmp/nuget.zip -o/tmp/nuget -y >/dev/null 2>&1 && \
+    cp -r /tmp/nuget/tools/* ${PYTHON_PREFIX}/ && \
+    rm -rf /tmp/nuget /tmp/nuget.zip
+
+# Verify the extracted files
+RUN echo "=== Verify Python DLL ===" && \
+    ls -la ${PYTHON_PREFIX}/python38.dll && \
+    echo "=== Verify Python headers ===" && \
+    ls ${PYTHON_PREFIX}/include/Python.h && \
+    echo "=== Verify Python lib ===" && \
+    ls ${PYTHON_PREFIX}/libs/python38.lib && \
+    echo "=== Files in /opt/nuclei/python38 ===" && \
+    ls -la ${PYTHON_PREFIX}/
+
+# Copy python-config-mingw.sh for GDB MinGW cross-compilation
+COPY python-config-mingw.sh ${PYTHON_PREFIX}/python-config-mingw.sh
+RUN chmod +x ${PYTHON_PREFIX}/python-config-mingw.sh
+
+# Fix NuGet python38.lib import library: incorrect CryptAcquireContextA mapping
+# to python38.dll instead of ADVAPI32.dll, causing Windows entry point error.
+# Regenerate a clean import library from python38.dll actual exports.
+COPY fix_python38_importlib.py /tmp/
+RUN pip3 install pefile && python3 /tmp/fix_python38_importlib.py ${PYTHON_PREFIX}/python38.dll
+
+# Default command
+CMD ["/bin/bash"]

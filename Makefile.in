@@ -366,6 +366,7 @@ stamps/build-gdb-linux: $(GDB_SRCDIR) $(GDB_SRC_GIT)
 		--with-sysroot=$(SYSROOT) \
 		$(MULTILIB_FLAGS) \
 		@with_guile@ \
+		@with_python@ \
 		--disable-werror \
 		--disable-nls \
 		$(GDB_TARGET_FLAGS) \
@@ -610,6 +611,7 @@ stamps/build-gdb-newlib: $(GDB_SRCDIR) $(GDB_SRC_GIT)
 		$(CONFIGURE_HOST) \
 		--prefix=$(INSTALL_DIR) \
 		@with_guile@ \
+		@with_python@ \
 		--disable-werror \
 		$(GDB_TARGET_FLAGS) \
 		--enable-gdb \

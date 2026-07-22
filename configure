@@ -601,6 +601,7 @@ with_gcc_src
 enable_doc
 enable_llvm
 enable_gdb
+with_python
 with_guile
 with_system_zlib
 with_host
@@ -696,6 +697,7 @@ with_target_cxxflags
 with_host
 with_system_zlib
 with_guile
+with_python
 enable_gdb
 enable_llvm
 enable_doc
@@ -1379,6 +1381,7 @@ Optional Packages:
                           nothing
   --without-system-zlib   use the builtin copy of zlib from GCC
   --with-guile            Set which guile to use, if any
+  --with-python           Set which python to use for GDB, if any
   --with-gcc-src          Set gcc source path, use builtin source by default
   --with-binutils-src     Set binutils source path, use builtin source by
                           default
@@ -3579,6 +3582,24 @@ if test "x$with_guile" != xdefault; then :
 
 else
   with_guile=""
+
+fi
+
+
+# Check whether --with-python was given.
+if test "${with_python+set}" = set; then :
+  withval=$with_python;
+else
+  with_python=default
+
+fi
+
+
+if test "x$with_python" != xdefault; then :
+  with_python=--with-python=$with_python
+
+else
+  with_python=""
 
 fi
 

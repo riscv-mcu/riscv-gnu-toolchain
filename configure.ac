@@ -225,6 +225,17 @@ AS_IF([test "x$with_guile" != xdefault],
 	[AC_SUBST(with_guile,--with-guile=$with_guile)],
 	[AC_SUBST(with_guile,"")])
 
+AC_ARG_WITH(python,
+	[AC_HELP_STRING([--with-python],
+			[Set which python to use for GDB, if any])],
+	[],
+	[with_python=default]
+	)
+
+AS_IF([test "x$with_python" != xdefault],
+	[AC_SUBST(with_python,--with-python=$with_python)],
+	[AC_SUBST(with_python,"")])
+
 AC_ARG_ENABLE(gdb,
 	[AS_HELP_STRING([--disable-gdb],
 		[Don't build GDB, as it's not upstream])],

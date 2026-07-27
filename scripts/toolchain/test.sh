@@ -67,9 +67,18 @@ echo "INFO: configure toolchain"
 RVABI="$ABI"
 unset ABI
 
+# Short tag for log filenames: extract rv32/rv64 from ARCH + ABI.
+# Using the full $ARCH (which may be a long march string) can exceed the
+# filesystem NAME_MAX (255 bytes), so use a short "rvNN-abi" tag instead.
+case "$ARCH" in
+    rv32*) TAG="rv32-$RVABI" ;;
+    rv64*) TAG="rv64-$RVABI" ;;
+    *)     TAG="$RVABI" ;;
+esac
+
 # --- step 2: build gcc (stage1 + newlib + stage2 + gdb) ---
 echo "INFO: build gcc (make newlib -j$JOBS)"
-make newlib -j"$JOBS" 2>&1 | tee build-gcc-"$ARCH"-"$RVABI".log
+make newlib -j"$JOBS" 2>&1 | tee build-gcc-"$TAG".log
 buildgcc=${PIPESTATUS[0]}
 if [ $buildgcc -ne 0 ]; then
     echo "ERROR: gcc build failed"
@@ -78,7 +87,7 @@ fi
 
 # --- step 3: build sim (spike + pk for --with-sim=spike) ---
 echo "INFO: build sim (make build-sim -j$JOBS)"
-make build-sim -j"$JOBS" 2>&1 | tee build-sim-"$ARCH"-"$RVABI".log
+make build-sim -j"$JOBS" 2>&1 | tee build-sim-"$TAG".log
 buildsim=${PIPESTATUS[0]}
 if [ $buildsim -ne 0 ]; then
     echo "ERROR: sim build failed"
@@ -87,7 +96,7 @@ fi
 
 # --- step 4: build dejagnu (test framework) ---
 echo "INFO: build dejagnu (make stamps/build-dejagnu -j$JOBS)"
-make stamps/build-dejagnu -j"$JOBS" 2>&1 | tee build-dejagnu-"$ARCH"-"$RVABI".log
+make stamps/build-dejagnu -j"$JOBS" 2>&1 | tee build-dejagnu-"$TAG".log
 builddejagnu=${PIPESTATUS[0]}
 if [ $builddejagnu -ne 0 ]; then
     echo "ERROR: dejagnu build failed"
@@ -101,12 +110,12 @@ fi
 
 # --- step 5: run gcc testsuite ---
 echo "INFO: run gcc testsuite (make report-newlib -j$JOBS)"
-make report-newlib -j"$JOBS" 2>&1 | tee report-newlib-"$ARCH"-"$RVABI".log
+make report-newlib -j"$JOBS" 2>&1 | tee report-newlib-"$TAG".log
 newlibsts=${PIPESTATUS[0]}
 
 # --- step 6: run binutils testsuite ---
 echo "INFO: run binutils testsuite (make report-binutils -j$JOBS)"
-make report-binutils -j"$JOBS" 2>&1 | tee report-binutils-"$ARCH"-"$RVABI".log
+make report-binutils -j"$JOBS" 2>&1 | tee report-binutils-"$TAG".log
 binutilssts=${PIPESTATUS[0]}
 
 # --- print both testsuite-filter summaries together for easy comparison ---

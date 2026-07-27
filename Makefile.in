@@ -1105,7 +1105,7 @@ stamps/build-pk32: $(PK_SRCDIR) $(PK_SRC_GIT) stamps/build-gcc-newlib-stage2
 	cd $(notdir $@) && $</configure \
 		--prefix=$(INSTALL_DIR) \
 		--host=$(NEWLIB_TUPLE) \
-		--with-arch=rv32gc \
+		--with-arch=rv32imafd_zca \
 		$(WITH_ABI)
 	$(MAKE) -C $(notdir $@)
 	cp $(notdir $@)/pk $(INSTALL_DIR)/$(NEWLIB_TUPLE)/bin/pk32
@@ -1118,7 +1118,7 @@ stamps/build-pk64: $(PK_SRCDIR) $(PK_SRC_GIT) stamps/build-gcc-newlib-stage2
 	cd $(notdir $@) && $</configure \
 		--prefix=$(INSTALL_DIR) \
 		--host=$(NEWLIB_TUPLE) \
-		--with-arch=rv64gc \
+		--with-arch=rv64imafd_zca \
 		$(WITH_ABI)
 	$(MAKE) -C $(notdir $@)
 	cp $(notdir $@)/pk $(INSTALL_DIR)/$(NEWLIB_TUPLE)/bin/pk64

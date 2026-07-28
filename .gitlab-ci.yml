@@ -270,10 +270,14 @@ test_toolchain_report:
         ciabi: ilp32d
       - ciarch: rv64gc
         ciabi: lp64d
+      - ciarch: "rv32imafd_zca_zcb_zcf_zcmp_zcmt_zba_zbb_zbc_zbs_zicond_zilsd_zk_zks_xxldspn3x"
+        ciabi: ilp32d
+      - ciarch: "rv64imafd_zca_zcb_zcmp_zcmt_zba_zbb_zbc_zbs_zicond_zk_zks_xxldsp"
+        ciabi: lp64d
   script:
     # run the unified test script (build + gcc/binutils testsuite)
     # ARCH/ABI come from the matrix; JOBS from the global variable
-    - ARCH=$ciarch ABI=$ciabi JOBS=$JOBS ./scripts/toolchain/test.sh 2>&1 | tee report-${ciarch}-${ciabi}.log
+    - ARCH=$ciarch ABI=$ciabi JOBS=$JOBS ./scripts/toolchain/test.sh 2>&1 | tee report-${CI_JOB_NAME_SLUG}.log
     - teststs=${PIPESTATUS[0]}
     - exit $teststs
   artifacts:

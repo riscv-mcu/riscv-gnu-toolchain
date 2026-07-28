@@ -633,3 +633,30 @@ FAIL: gcc.target/riscv/xxlcz-bitop.c
 FAIL: gcc.target/riscv/zfbfmin-bf16_float_libcall_convert.c
 # movqi-1: stack offset/instruction differs from gcc-16 expectation (sw zero,12(sp))
 FAIL: gcc.target/riscv/rvv/base/movqi-1.c
+# --- additional failures for rv32imafd_zca_..._xxldspn3x march ---
+# zcmp enabled: cm.push/cm.pop replaces __riscv_save/restore libcall
+FAIL: gcc.target/riscv/save-restore-2.c
+FAIL: gcc.target/riscv/save-restore-3.c
+FAIL: gcc.target/riscv/save-restore-4.c
+FAIL: gcc.target/riscv/save-restore-6.c
+FAIL: gcc.target/riscv/save-restore-7.c
+FAIL: gcc.target/riscv/pr112478.c
+FAIL: gcc.target/riscv/pr113095.c
+# execution failures (zcmp/simd instructions or spike limitations)
+FAIL: c-c++-common/torture/vector-shift1.c
+FAIL: gcc.c-torture/execute/20050604-1.c
+FAIL: gcc.c-torture/execute/pr65427.c
+FAIL: gcc.c-torture/execute/scal-to-vec1.c
+FAIL: gcc.c-torture/execute/scal-to-vec2.c
+FAIL: gcc.c-torture/execute/simd-2.c
+FAIL: gcc.c-torture/execute/simd-5.c
+FAIL: gcc.dg/pr101384.c
+FAIL: gcc.dg/pr96298.c
+FAIL: gcc.dg/pr98793.c
+FAIL: gcc.dg/torture/vector-shift2.c
+FAIL: gcc.dg/tree-ssa/tailcall-7-run.c
+FAIL: g++.dg/vect/pr84556.cc
+# UNRESOLVED variants (compilation failed to produce executable / ICE)
+UNRESOLVED: g++.dg/vect/pr84556.cc
+UNRESOLVED: gcc.c-torture/execute/pr65427.c
+UNRESOLVED: gcc.target/riscv/pr113095.c

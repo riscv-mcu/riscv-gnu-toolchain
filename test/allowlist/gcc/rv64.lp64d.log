@@ -597,3 +597,43 @@ UNRESOLVED: gcc.target/riscv/xxlcz-bitmanip-rv64.c
 FAIL: gcc.target/riscv/zfbfmin-bf16_float_libcall_convert.c
 # movqi-1: stack offset/instruction differs from gcc-16 expectation (sw zero,12(sp))
 FAIL: gcc.target/riscv/rvv/base/movqi-1.c
+# --- rv64imafd_zca_..._xxldsp march additional failures ---
+# zcmp enabled: cm.push/cm.pop replaces __riscv_save/restore libcall
+FAIL: gcc.target/riscv/save-restore-2.c
+FAIL: gcc.target/riscv/save-restore-3.c
+FAIL: gcc.target/riscv/save-restore-4.c
+FAIL: gcc.target/riscv/save-restore-6.c
+FAIL: gcc.target/riscv/save-restore-7.c
+FAIL: gcc.target/riscv/pr112478.c
+FAIL: gcc.target/riscv/pr116085.c
+# pr113095: compilation failed (march combination issue)
+FAIL: gcc.target/riscv/pr113095.c
+UNRESOLVED: gcc.target/riscv/pr113095.c
+UNRESOLVED: gcc.target/riscv/pr116085.c
+# execution failures: spike "illegal instruction" (xxldsp auto-match generates
+# nuclei DSP instructions that spike doesn't recognize)
+FAIL: c-c++-common/torture/vector-compare-2.c
+FAIL: c-c++-common/torture/vector-shift.c
+FAIL: c-c++-common/torture/vector-shift1.c
+FAIL: c-c++-common/torture/vector-shift2.c
+FAIL: gcc.c-torture/execute/20050604-1.c
+FAIL: gcc.c-torture/execute/mul-sext.c
+FAIL: gcc.c-torture/execute/pr23135.c
+FAIL: gcc.c-torture/execute/scal-to-vec1.c
+FAIL: gcc.c-torture/execute/scal-to-vec2.c
+FAIL: gcc.c-torture/execute/simd-1.c
+FAIL: gcc.c-torture/execute/simd-2.c
+FAIL: gcc.c-torture/execute/simd-5.c
+FAIL: gcc.dg/pr101384.c
+FAIL: gcc.dg/pr53060.c
+FAIL: gcc.dg/pr57233.c
+FAIL: gcc.dg/pr64252.c
+FAIL: gcc.dg/pr80286.c
+FAIL: gcc.dg/pr96298.c
+FAIL: gcc.dg/pr98793.c
+FAIL: gcc.dg/torture/pr103181.c
+FAIL: gcc.dg/torture/pr94516.c
+FAIL: gcc.dg/torture/pr98117.c
+FAIL: gcc.dg/torture/vector-shift2.c
+FAIL: g++.dg/vect/pr84556.cc
+UNRESOLVED: g++.dg/vect/pr84556.cc

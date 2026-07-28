@@ -130,6 +130,32 @@ SPIKE_EXT_NOT_ALLOWED = [
   "zvl1024b",
   "zvl2048b",
   "zvl4096b",
+  # Nuclei custom extensions not supported by upstream spike.
+  # Filter them out so spike can still execute .elf compiled with these
+  # extensions (the .elf won't use nuclei-specific instructions in standard
+  # C library code, so execution is safe with standard extensions only).
+  "xxldsp",
+  "xxldspn1x",
+  "xxldspn2x",
+  "xxldspn3x",
+  "xxlfbf",
+  "xxlvfbf",
+  "xxlvqmacc",
+  "xxlvw",
+  "xxlcz",
+  "xxlczabs",
+  "xxlczbitop",
+  "xxlczbitrev",
+  "xxlczbmrk",
+  "xxlczbri",
+  "xxlczgp",
+  "xxlczmac",
+  "xxlczpstinc",
+  "xxlczslet",
+  "zpn",
+  "zprv",
+  "zpsf",
+  "zibi",
 ]
 
 CPU_OPTIONS = {

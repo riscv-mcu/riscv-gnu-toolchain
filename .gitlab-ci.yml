@@ -103,7 +103,7 @@ prepare_source:
 ## Job template
 .build_job_template: &build_job_template_default
   stage: build
-  timeout: 6h
+  timeout: 10h
   interruptible: true
   # https://docs.gitlab.com/ee/ci/yaml/index.html#retrywhen
   retry:

@@ -35,7 +35,7 @@ prepare_source:
   interruptible: true
   # https://docs.gitlab.com/ee/ci/yaml/#timeout
   # clone takes about 10min, upload artifacts need more time
-  timeout: 30m
+  timeout: 60m
   retry:
     max: 2
     when:
@@ -91,10 +91,13 @@ prepare_source:
         echo "INFO: Download gcc prerequisites..."
         ./$downscript
         cd ..
+    - echo "INFO Creating single high-compression source archive (including .git) to speed up CI..."
+    - tar -Jcf /tmp/toolchain_source.tar.xz . && mv /tmp/toolchain_source.tar.xz .
+    - ls -lh toolchain_source.tar.xz
   artifacts:
     name: "rvtoolchain_source-${CI_COMMIT_SHA::8}"
     paths:
-      - ./*
+      - toolchain_source.tar.xz
   tags:
     - env::docker
     - build::toolchain
@@ -125,6 +128,8 @@ prepare_source:
       - cigen
       - logs
   before_script:
+    - echo "INFO Extracting source archive..."
+    - tar -Jxf toolchain_source.tar.xz && rm -f toolchain_source.tar.xz
     # check toolchain repo status
     - |
         echo "INFO: Show current repo status"

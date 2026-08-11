@@ -69,10 +69,10 @@ FORCE_SUBMODULE=1 ./scripts/toolchain/prepsrc.sh develop
 We provide two docker images for build toolchains.
 
 > [!NOTE]
-> The following docker images are updated @ 2025.08.07
+> The following docker images are updated @ 2026.08.11
 
-- [**gnutoolchain-centos7:latest**](https://hub.docker.com/r/nucleisoftware/gnutoolchain-centos7/tags): Used to build toolchain for linux 64 host.
-- [**gnutoolchain-ubuntu20.04:latest**](https://hub.docker.com/r/nucleisoftware/gnutoolchain-ubuntu20.04/tags): Used to build toolchain for windows 32 and 64 host, windows 64 support is added from 2025.08.
+- [**gnutoolchain-centos7:v2**](https://hub.docker.com/r/nucleisoftware/gnutoolchain-centos7/tags): Used to build toolchain for linux 64 host (with Python 3.8.10 build environment installed).
+- [**gnutoolchain-ubuntu20.04:v2**](https://hub.docker.com/r/nucleisoftware/gnutoolchain-ubuntu20.04/tags): Used to build toolchain for windows 32 and 64 host, windows 64 support is added from 2025.08, and Windows Python 3.8.10 cross-compilation support is added from 2026.08.
 
 **Recommended**: You can use this ``docker.sh`` script to startup docker environment used to build toolchain.
 
@@ -85,8 +85,8 @@ PULLFIRST=1 ./scripts/toolchain/docker.sh linux64
 # or you need to set PATH to include your linux toolchain path first.
 # such as below:
 # here are commands executed in docker environment, make sure the prebuilt toolchain are placed under LocalInstall folder
-# for glibc: export PATH=/work/LocalInstall/linux64/glibc/2025.02/gcc/bin:$PATH
-# for newlibc: export PATH=/work/LocalInstall/linux64/newlibc/2025.02/gcc/bin:$PATH
+# for glibc: export PATH=/work/LocalInstall/linux64/glibc/2025.10/gcc/bin:$PATH
+# for newlibc: export PATH=/work/LocalInstall/linux64/newlibc/2025.10/gcc/bin:$PATH
 ~~~
 
 **Now you should be in docker environment now.**

@@ -11,7 +11,7 @@ pullfirst=${PULLFIRST:-}
 
 # arguments
 # arg 1: toolchain to be built for, default linux64, otherwise will be win64
-# arg 2: docker image tag, default latest
+# arg 2: docker image tag, default v2
 toolhost=${1:-linux64}
 imgtag=${2:-v2}
 

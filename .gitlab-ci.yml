@@ -13,6 +13,9 @@ variables:
   # centos 6 is EOL, use centos 7
   LINBUILDIMG: "gnutoolchain-centos7"
   WINBUILDIMG: "gnutoolchain-ubuntu20.04"
+  # image used by testsuite jobs (gcc newlib report)
+  TESTIMG: "gnutoolchain-test"
+  TESTIMGTAG: "latest"
   IMGTAG: "v2"
   JOBS: 32
 
@@ -251,8 +254,8 @@ build_windows:
 # on failure), and gate build/deploy on success.
 test_toolchain_report:
   stage: test
-  image: $IMGSVR/$TESTIMG:$IMGTAG
-  timeout: 6h
+  image: $IMGSVR/$TESTIMG:$TESTIMGTAG
+  timeout: 2h
   interruptible: true
   retry:
     max: 2

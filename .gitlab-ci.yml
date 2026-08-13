@@ -278,6 +278,9 @@ test_toolchain_report:
       - ciarch: "rv64imafd_zca_zcb_zcmp_zcmt_zba_zbb_zbc_zbs_zicond_zk_zks_xxldsp"
         ciabi: lp64d
   script:
+    # extract the source archive produced by prepare_source
+    - echo "INFO Extracting source archive..."
+    - tar -Jxf toolchain_source.tar.xz && rm -f toolchain_source.tar.xz
     # run the unified test script (build + gcc/binutils testsuite)
     # ARCH/ABI come from the matrix; JOBS from the global variable
     - ARCH=$ciarch ABI=$ciabi JOBS=$JOBS ./scripts/toolchain/test.sh 2>&1 | tee report-${CI_JOB_NAME_SLUG}.log

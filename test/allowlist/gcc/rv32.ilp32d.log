@@ -621,3 +621,4 @@ UNRESOLVED: gcc.target/riscv/shorten-memrefs-3.c
 UNRESOLVED: gcc.target/riscv/shorten-memrefs-5.c
 UNRESOLVED: gcc.target/riscv/shorten-memrefs-8.c
 UNRESOLVED: g++.dg/vect/pr115278.cc
+FAIL: g++.dg/modules/bad-mapper-3.C

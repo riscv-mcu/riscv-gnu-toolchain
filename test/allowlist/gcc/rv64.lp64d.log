@@ -587,3 +587,4 @@ FAIL: g++.target/riscv/redundant-bitmap-1.C
 FAIL: g++.target/riscv/redundant-bitmap-2.C
 FAIL: g++.target/riscv/redundant-bitmap-3.C
 FAIL: g++.target/riscv/redundant-bitmap-4.C
+FAIL: g++.dg/modules/bad-mapper-3.C

@@ -10,6 +10,8 @@ do
     shift
 done
 
-xlen="$(readelf -h $1 | grep 'Class' | cut -d: -f 2 | xargs echo | sed 's/^ELF//')"
+xlen="$(march-to-cpu-opt --elf-file-path $1 --print-xlen)"
+qemu_cpu="$(march-to-cpu-opt --elf-file-path $1 --print-qemu-cpu)"
 
-QEMU_CPU=${QEMU_CPU} qemu-riscv$xlen -r 5.10 "${qemu_args[@]}" -L ${RISC_V_SYSROOT} "$@"
+QEMU_CPU="${qemu_cpu}" qemu-riscv${xlen} -r 5.10 "${qemu_args[@]}" \
+  -L ${RISC_V_SYSROOT} "$@"

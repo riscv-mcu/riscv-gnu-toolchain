@@ -1,4 +1,5 @@
-AC_INIT(riscv-toolchain, 1.0)
+## Process this file with autoconf 2.69. Other versions may not work.
+AC_INIT([riscv-toolchain],[1.0])
 
 AC_PROG_CC
 AC_PROG_FGREP
@@ -21,14 +22,14 @@ AC_SUBST([GSED], [$ac_cv_path_GSED])
 
 need_gcc_external_libraries="no"
 AC_CHECK_LIB(gmp, __gmpz_init, ,
-        [need_gcc_external_libraries="yes"])
+	[need_gcc_external_libraries="yes"])
 AC_CHECK_LIB(mpfr, mpfr_init, ,
-        [need_gcc_external_libraries="yes"])
+	[need_gcc_external_libraries="yes"])
 AC_CHECK_LIB(mpc, mpc_init2, ,
-        [need_gcc_external_libraries="yes"])
+	[need_gcc_external_libraries="yes"])
 AS_IF([test x"$need_gcc_external_libraries" != xno],
-      [AC_SUBST(NEED_GCC_EXTERNAL_LIBRARIES,true)],
-      [AC_SUBST(NEED_GCC_EXTERNAL_LIBRARIES,false)])
+	[AC_SUBST(NEED_GCC_EXTERNAL_LIBRARIES,true)],
+	[AC_SUBST(NEED_GCC_EXTERNAL_LIBRARIES,false)])
 
 AC_PATH_PROG([CURL], [curl], [no])
 AC_PATH_PROG([WGET], [wget], [no])
@@ -40,26 +41,28 @@ AS_IF([test x"$CURL" != xno], [FETCHER="$CURL -L -o - --ftp-pasv --retry 10"],
 AC_SUBST(FETCHER)
 
 AC_ARG_ENABLE(linux,
-        [AS_HELP_STRING([--enable-linux],
-		[set linux as the default make target @<:@--disable-linux@:>@])],
-        [],
-        [enable_linux=no]
-        )
+	[AS_HELP_STRING([--enable-linux],
+		[set linux as the default make target @<:@--disable-linux@:>@])])
 
-AS_IF([test "x$enable_linux" != xno],
+AS_IF([test "x$enable_linux" = xyes],
 	[AC_SUBST(default_target, linux)],
 	[AC_SUBST(default_target, newlib)])
 
 AC_ARG_ENABLE(debug_info,
-        [AS_HELP_STRING([--enable-debug-info],
-		[build glibc/musl/newlibc/libgcc with debug information])],
-        [enable_debug_info=yes],
-        [enable_debug_info=no]
-        )
+	[AS_HELP_STRING([--enable-debug-info],
+		[build glibc/musl/newlibc/libgcc with debug information])])
 
-AS_IF([test "x$enable_debug_info" != xyes],
-	[AC_SUBST(debug_info, "")],
-	[AC_SUBST(debug_info, "-g")])
+AS_IF([test "x$enable_debug_info" = xyes],
+	[AC_SUBST(debug_info, "-g")],
+	[AC_SUBST(debug_info, "")])
+
+AC_ARG_ENABLE(default-pie,
+	[AS_HELP_STRING([--enable-default-pie],
+		[build linux toolchain with default PIE @<:@--enable-default-pie@:>@])])
+
+AS_IF([test "x$enable_default_pie" = xyes],
+	[AC_SUBST(enable_default_pie, "--enable-default-pie")],
+	[AC_SUBST(enable_default_pie, "--disable-default-pie")])
 
 AC_ARG_WITH(arch,
 	[AS_HELP_STRING([--with-arch=rv64imafdc],
@@ -76,11 +79,15 @@ AC_ARG_WITH(abi,
 	)
 
 AC_ARG_WITH(tune,
-	[AS_HELP_STRING([--with-tune=rocket],
+    [AS_HELP_STRING([--with-tune=rocket],
 		[Set the base RISC-V CPU, defaults to rocket])],
 	[],
 	[with_tune=rocket]
 	)
+
+AS_IF([test "x$with_tune" != xno],
+	[AC_SUBST(WITH_TUNE,--with-tune=$with_tune)],
+	[AC_SUBST(WITH_TUNE,"")])
 
 AC_ARG_WITH(isa-spec,
 	[AS_HELP_STRING([--with-isa-spec=2.2],
@@ -95,6 +102,12 @@ AC_ARG_WITH(sim,
 	[],
 	[with_sim=qemu]
 	)
+
+AC_ARG_WITH(languages,
+	[AS_HELP_STRING([--with-languages=],
+		[Sets the enabled languages for GNU toolchain, defaults to c,c++,fortran for Linux/native and Linux/glibc or c,c++ for Bare-metal, Linux/musl and Linux/uClibc])],
+	[]
+	) 
 
 AS_IF([test "x$with_abi" = xdefault],
 	[AS_CASE([$with_arch],
@@ -113,13 +126,11 @@ AC_SUBST(WITH_ABI, --with-abi=$with_abi)
 AC_SUBST(WITH_TUNE, --with-tune=$with_tune)
 AC_SUBST(WITH_ISA_SPEC, --with-isa-spec=$with_isa_spec)
 AC_SUBST(WITH_SIM, $with_sim)
+AC_SUBST(WITH_LANGUAGES, $with_languages)
 
 AC_ARG_ENABLE(multilib,
 	[AS_HELP_STRING([--enable-multilib],
-		[build both RV32 and RV64 runtime libraries (only RV64 for musl libc) @<:@--disable-multilib@:>@])],
-	[],
-	[enable_multilib=no]
-	)
+		[build both RV32 and RV64 runtime libraries @<:@--disable-multilib@:>@])])
 
 AC_ARG_WITH(multilib-generator,
 	[AS_HELP_STRING([--with-multilib-generator],
@@ -128,46 +139,59 @@ AC_ARG_WITH(multilib-generator,
 	[with_multilib_generator=no]
 	)
 
+AC_ARG_WITH(extra-multilib-test,
+	[AS_HELP_STRING([--with-extra-multilib-test],
+		[Adding extra multi-libs configuration for testing, this can be use even --disable-multilib, but be aware user need to make sure those extra multilib set can work/compatible with existing multi-libs, format: <arch>-<abi>;<arch>-<abi>  e.g: --with-extra-multilib-test="rv64gcv-lp64;rv64gcv_zba-lp64"])],
+	[],
+	[with_extra_multilib_test=no]
+	)
+
 AS_IF([test "x$with_multilib_generator" != xno],
-        [AC_SUBST(multilib_gen,"$with_multilib_generator")],
-        [AC_SUBST(multilib_gen,"")])
+	[AC_SUBST(multilib_gen,"$with_multilib_generator")],
+	[AC_SUBST(multilib_gen,"")])
 
+AS_IF([test "x$with_extra_multilib_test" != xno],
+	[AC_SUBST(extra_multilib_test,"$with_extra_multilib_test")],
+	[AC_SUBST(extra_multilib_test,"")])
 
-AS_IF([test "x$enable_multilib" != xno || test "x$with_multilib_generator" != xno],
-        [AC_SUBST(multilib_flags,--enable-multilib)],
+AS_IF([test "x$enable_multilib" = xyes || test "x$with_multilib_generator" != xno],
+	[AC_SUBST(multilib_flags,--enable-multilib)],
 	[AC_SUBST(multilib_flags,--disable-multilib)])
 
-AS_IF([test "x$enable_multilib" != xno],
-        [AC_SUBST(glibc_multilib_names,"rv32imac-ilp32 rv32imafdc-ilp32d rv64imac-lp64 rv64imafdc-lp64d")],
-        [AC_SUBST(glibc_multilib_names,"$with_arch-$with_abi")])
+AS_IF([test "x$enable_multilib" = xyes],
+	[AC_SUBST(glibc_multilib_names,"rv32imac-ilp32 rv32gc-ilp32d rv64imac-lp64 rv64gc-lp64d rv64gcv-lp64d")],
+	[AC_SUBST(glibc_multilib_names,"$with_arch-$with_abi")])
 
-AS_IF([test "x$enable_multilib" != xno],
-        [AC_SUBST(newlib_multilib_names,"rv32i-ilp32 rv32iac-ilp32 rv32im-ilp32 rv32imac-ilp32 rv32imafc-ilp32f rv64imac-lp64 rv64imafdc-lp64d")],
-        [AC_SUBST(newlib_multilib_names,"$with_arch-$with_abi")])
+AS_IF([test "x$enable_multilib" = xyes],
+	[AC_SUBST(newlib_multilib_names,"rv32i-ilp32 rv32iac-ilp32 rv32im-ilp32 rv32imac-ilp32 rv32imafc-ilp32f rv64imac-lp64 rv64gc-lp64d")],
+	[AC_SUBST(newlib_multilib_names,"$with_arch-$with_abi")])
 
-AS_IF([test "x$enable_multilib" != xno],
-        [AC_SUBST(musl_multilib_names,"rv64imac-lp64 rv64imafdc-lp64d")],
-        [AC_SUBST(musl_multilib_names,"$with_arch-$with_abi")])
+AS_IF([test "x$enable_multilib" = xyes],
+	[AC_SUBST(musl_multilib_names,"rv32imac-ilp32 rv32gc-ilp32d rv64imac-lp64 rv64gc-lp64d")],
+	[AC_SUBST(musl_multilib_names,"$with_arch-$with_abi")])
 
 AC_ARG_ENABLE(gcc-checking,
-        [AS_HELP_STRING([--enable-gcc-checking],
-		[Enable gcc internal checking, it will make gcc very slow, only enable it when developing gcc @<:@--disable-gcc-checking@:>@])],
-        [],
-        []
-        )
-AS_IF([test "x$enable_gcc_checking" != x],
-	[AC_SUBST(gcc_checking, --enable-checking=$enable_gcc_checking)],
+	[AS_HELP_STRING([--enable-gcc-checking],
+		[Enable gcc internal checking, it will make gcc very slow, only enable it when developing gcc @<:@--disable-gcc-checking@:>@])])
+
+AS_IF([test "x$enable_gcc_checking" = xyes],
+	[AC_SUBST(gcc_checking, --enable-checking)],
 	[AC_SUBST(gcc_checking, "")])
 
 AC_ARG_WITH(cmodel,
 	[AS_HELP_STRING([--with-cmodel],
 		[Select the code model to use when building libc and libgcc @<:@--with-cmodel=medany@:>@])],
 	[],
-	[]
+	[with_cmodel=no]
 	)
-AS_IF([test "x$with_cmodel" != x],
+
+AS_IF([test "x$with_cmodel" != xno],
 	[AC_SUBST(cmodel, -mcmodel=$with_cmodel)],
 	[AC_SUBST(cmodel, -mcmodel=medany)])
+
+AS_IF([test "x$with_endian" != x],
+	[AC_SUBST(endian, endian=$with_endian)],
+	[AC_SUBST(endian, endian=little)])
 
 AC_ARG_WITH(target_cflags,
 	[AS_HELP_STRING([--with-target-cflags],
@@ -190,7 +214,7 @@ AC_CONFIG_FILES([scripts/wrapper/sed/sed], [chmod +x scripts/wrapper/sed/sed])
 
 AC_ARG_WITH(host,
 	[AS_HELP_STRING([--with-host=x86_64-w64-mingw32],
-			[Sets the host for the tools, you probably want nothing])],
+		[Sets the host for the tools, you probably want nothing])],
 	[],
 	[with_host=default]
 	)
@@ -215,8 +239,7 @@ AS_IF([test "x$with_system_zlib" != xno],
 	[AC_SUBST(with_system_zlib,--without-system-zlib)])
 
 AC_ARG_WITH(guile,
-	[AC_HELP_STRING([--with-guile],
-			[Set which guile to use, if any])],
+	[AS_HELP_STRING([--with-guile],[Set which guile to use, if any])],
 	[],
 	[with_guile=default]
 	)
@@ -238,10 +261,7 @@ AS_IF([test "x$with_python" != xdefault],
 
 AC_ARG_ENABLE(gdb,
 	[AS_HELP_STRING([--disable-gdb],
-		[Don't build GDB, as it's not upstream])],
-	[],
-	[enable_gdb=yes]
-	)
+		[Don't build GDB, as it's not upstream])])
 
 AS_IF([test "x$enable_gdb" != xno],
 	[AC_SUBST(enable_gdb, --enable-gdb)],
@@ -272,8 +292,7 @@ AS_IF([test "x$enable_doc" != xyes],
 AC_DEFUN([AX_ARG_WITH_SRC],
 	[{m4_pushdef([opt_name], with_$1_src)
 	  AC_ARG_WITH($1-src,
-		[AC_HELP_STRING([--with-$1-src],
-				[Set $1 source path, use builtin source by default])],
+		[AS_HELP_STRING([--with-$1-src],[Set $1 source path, use builtin source by default])],
 		[],
 		[opt_name=default]
 		)
@@ -296,8 +315,7 @@ AX_ARG_WITH_SRC(dejagnu, dejagnu)
 AX_ARG_WITH_SRC(llvm, llvm)
 
 AC_ARG_WITH(linux-headers-src,
-	[AC_HELP_STRING([--with-linux-headers-src],
-			[Set linux-headers source path, use builtin source by default])],
+	[AS_HELP_STRING([--with-linux-headers-src],[Set linux-headers source path, use builtin source by default])],
 	[],
 	[with_linux_headers_src=default]
 	)
@@ -308,23 +326,17 @@ AS_IF([test "x$with_linux_headers_src" != xdefault],
 
 AC_ARG_ENABLE(libsanitizer,
 	[AS_HELP_STRING([--enable-libsanitizer],
-		[Build libsanitizer, which only supports rv64])],
-	[],
-	[enable_libsanitizer=no]
-	)
+		[Build libsanitizer, which only supports rv64])])
 
-AS_IF([test "x$enable_libsanitizer" != xno],
+AS_IF([test "x$enable_libsanitizer" = xyes],
 	[AC_SUBST(enable_libsanitizer, --enable-libsanitizer)],
 	[AC_SUBST(enable_libsanitizer, --disable-libsanitizer)])
 
 AC_ARG_ENABLE(qemu_system,
 	[AS_HELP_STRING([--enable-qemu-system],
-		[Build qemu with system-mode emulation])],
-	[],
-	[enable_qemu_system=no]
-	)
+		[Build qemu with system-mode emulation])])
 
-AS_IF([test "x$enable_qemu_system" != xno],
+AS_IF([test "x$enable_qemu_system" = xyes],
 	[AC_SUBST(qemu_targets, [riscv64-linux-user,riscv32-linux-user,riscv64-softmmu,riscv32-softmmu])],
 	[AC_SUBST(qemu_targets, [riscv64-linux-user,riscv32-linux-user])])
 

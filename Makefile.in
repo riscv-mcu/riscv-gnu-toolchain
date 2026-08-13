@@ -13,9 +13,84 @@ GDB_SRCDIR := @with_gdb_src@
 QEMU_SRCDIR := @with_qemu_src@
 SPIKE_SRCDIR := @with_spike_src@
 PK_SRCDIR := @with_pk_src@
+LLVM_SRCDIR := @with_llvm_src@
+LLVM_LINUX_COMMON_CMAKE_FLAGS = \
+    -DCMAKE_INSTALL_PREFIX=$(INSTALL_DIR) \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DLLVM_TARGETS_TO_BUILD="RISCV" \
+    -DLLVM_ENABLE_PROJECTS="llvm;clang;lld" \
+    -DLLVM_ENABLE_RUNTIMES="compiler-rt;libcxx;libcxxabi;libunwind" \
+    -DDEFAULT_SYSROOT="../sysroot" \
+    -DLLVM_INSTALL_TOOLCHAIN_ONLY=On \
+    -DLLVM_BINUTILS_INCDIR=$(BINUTILS_SRCDIR)/include \
+    -DLLVM_PARALLEL_LINK_JOBS=4
+define LLVM_BUILD_OPENMP
+	if test $(XLEN) -eq 64; then \
+	    mkdir $(notdir $@)/openmp-shared; \
+	    cmake -S$(LLVM_SRCDIR)/openmp \
+	        -B$(notdir $@)/openmp-shared \
+	        -DCMAKE_INSTALL_PREFIX=$(SYSROOT) \
+	        -DCMAKE_C_COMPILER=$(LLVM_CC_FOR_TARGET) \
+	        -DCMAKE_CXX_COMPILER=$(LLVM_CXX_FOR_TARGET) \
+	        -DCMAKE_C_FLAGS="$(LLVM_CFLAGS_FOR_TARGET)" \
+	        -DCMAKE_CXX_FLAGS="$(LLVM_CXXFLAGS_FOR_TARGET)" \
+	        -DOPENMP_ENABLE_LIBOMPTARGET=Off \
+	        -DCMAKE_BUILD_TYPE=Release \
+	        -DLIBOMP_ARCH=riscv64 \
+	        -DLIBOMP_HAVE_WARN_SHARED_TEXTREL_FLAG=On \
+	        -DLIBOMP_HAVE_AS_NEEDED_FLAG=On \
+	        -DLIBOMP_HAVE_VERSION_SCRIPT_FLAG=On \
+	        -DLIBOMP_HAVE_STATIC_LIBGCC_FLAG=On \
+	        -DLIBOMP_HAVE_Z_NOEXECSTACK_FLAG=On \
+	        -DDISABLE_OMPD_GDB_PLUGIN=On \
+	        -DLIBOMP_OMPD_GDB_SUPPORT=Off \
+	        -DLIBOMP_ENABLE_SHARED=On; \
+	    $(MAKE) -C $(notdir $@)/openmp-shared; \
+	    $(MAKE) -C $(notdir $@)/openmp-shared install; \
+	    mkdir $(notdir $@)/openmp-static; \
+	    cmake -S$(LLVM_SRCDIR)/openmp \
+	        -B$(notdir $@)/openmp-static \
+	        -DCMAKE_INSTALL_PREFIX=$(SYSROOT) \
+	        -DCMAKE_C_COMPILER=$(LLVM_CC_FOR_TARGET) \
+	        -DCMAKE_CXX_COMPILER=$(LLVM_CXX_FOR_TARGET) \
+	        -DCMAKE_C_FLAGS="$(LLVM_CFLAGS_FOR_TARGET)" \
+	        -DCMAKE_CXX_FLAGS="$(LLVM_CXXFLAGS_FOR_TARGET)" \
+	        -DOPENMP_ENABLE_LIBOMPTARGET=Off \
+	        -DCMAKE_BUILD_TYPE=Release \
+	        -DLIBOMP_ARCH=riscv64 \
+	        -DLIBOMP_HAVE_WARN_SHARED_TEXTREL_FLAG=On \
+	        -DLIBOMP_HAVE_AS_NEEDED_FLAG=On \
+	        -DLIBOMP_HAVE_VERSION_SCRIPT_FLAG=On \
+	        -DLIBOMP_HAVE_STATIC_LIBGCC_FLAG=On \
+	        -DLIBOMP_HAVE_Z_NOEXECSTACK_FLAG=On \
+	        -DDISABLE_OMPD_GDB_PLUGIN=On \
+	        -DLIBOMP_OMPD_GDB_SUPPORT=Off \
+	        -DLIBOMP_ENABLE_SHARED=Off; \
+	    $(MAKE) -C $(notdir $@)/openmp-static; \
+	    $(MAKE) -C $(notdir $@)/openmp-static install; \
+	fi
+endef
+define LLVM_LINUX_SYSROOT_SETUP
+	# We have the following situation:
+	# - sysroot directory: $(INSTALL_DIR)/sysroot
+	# - GCC install directory: $(INSTALL_DIR)
+	# However, LLVM does not allow to set a GCC install prefix
+	# (-DGCC_INSTALL_PREFIX) if a sysroot (-DDEFAULT_SYSROOT) is set
+	# (the GCC install prefix will be ignored silently).
+	# Without a proper sysroot path feature.h won't be found by clang.
+	# Without a proper GCC install directory libgcc won't be found.
+	# As a workaround we have to merge both paths:
+	mkdir -p $(SYSROOT)/lib/
+	ln -s -f ../../lib/gcc $(SYSROOT)/lib/gcc
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && ln -f -s $(SYSROOT) sysroot
+endef
 DEJAGNU_SRCDIR := @with_dejagnu_src@
 LLVM_SRCDIR := @with_llvm_src@
 DEBUG_INFO := @debug_info@
+ENABLE_DEFAULT_PIE := @enable_default_pie@
+INSTALL_TARGET := @install_target@
 
 SIM ?= @WITH_SIM@
 
@@ -39,6 +114,12 @@ WITH_ISA_SPEC ?= @WITH_ISA_SPEC@
 SYSROOT := $(INSTALL_DIR)/sysroot
 ENABLE_LIBSANITIZER ?= @enable_libsanitizer@
 QEMU_TARGETS ?= @qemu_targets@
+QEMU_EXTRA_CONFIGURE_FLAGS := @enable_strip_qemu@ $(QEMU_EXTRA_CONFIGURE_FLAGS)
+
+ENABLED_LANGUAGES ?= @WITH_LANGUAGES@
+ifeq ($(ENABLED_LANGUAGES),)
+	undefine ENABLED_LANGUAGES
+endif
 
 SHELL := /bin/sh
 AWK := @GAWK@
@@ -48,10 +129,10 @@ PATH := $(INSTALL_DIR)/bin:$(PATH)
 # Check to see if we need wrapper scripts for awk/sed (which point to
 # gawk/gsed on platforms where these aren't the default), otherwise
 # don't override these as the wrappers don't always work.
-ifneq (@GSED@,/bin/sed)
+ifneq (@GSED@, $(shell realpath $(shell which sed)))
 	PATH := $(builddir)/scripts/wrapper/sed:$(PATH)
 endif
-ifneq (@GAWK@,/usr/bin/gawk)
+ifneq (@GAWK@, $(shell realpath $(shell which awk)))
 	PATH := $(builddir)/scripts/wrapper/awk:$(PATH)
 endif
 
@@ -63,18 +144,24 @@ ifeq ($(MULTILIB_GEN),)
 NEWLIB_MULTILIB_NAMES := @newlib_multilib_names@
 GCC_MULTILIB_FLAGS := $(MULTILIB_FLAGS)
 else
-NEWLIB_MULTILIB_NAMES := $(shell echo "$(MULTILIB_GEN)" | $(SED) 's/;/\n/g'| $(AWK) '{split($$0,a,"-"); printf "%s-%s ", a[1],a[2]}')
+NEWLIB_MULTILIB_NAMES := $(shell echo "$(MULTILIB_GEN)" | $(SED) 's/;/\n/g' | $(SED) '/^$$/d' | $(AWK) '{split($$0,a,"-"); printf "%s-%s", (NR==1?a[1]:" "a[1]),a[2]}')
 GCC_MULTILIB_FLAGS := $(MULTILIB_FLAGS) --with-multilib-generator="$(MULTILIB_GEN)"
 endif
 GLIBC_MULTILIB_NAMES := @glibc_multilib_names@
 GCC_CHECKING_FLAGS := @gcc_checking@
+
+EXTRA_MULTILIB_TEST := @extra_multilib_test@
 
 XLEN := $(shell echo $(WITH_ARCH) | tr A-Z a-z | sed 's/.*rv\([0-9]*\).*/\1/')
 ifneq ($(XLEN),32)
 	XLEN := 64
 endif
 
-make_tuple = riscv$(1)-unknown-$(2)
+ifeq (@endian@,big)
+ENDIAN_POSTFIX := be
+endif
+
+make_tuple = riscv$(1)$(ENDIAN_POSTFIX)-unknown-$(2)
 LINUX_TUPLE  ?= $(call make_tuple,$(XLEN),linux-gnu)
 NEWLIB_TUPLE ?= $(call make_tuple,$(XLEN),elf)
 MUSL_TUPLE ?= $(call make_tuple,$(XLEN),linux-musl)
@@ -82,6 +169,15 @@ MUSL_TUPLE ?= $(call make_tuple,$(XLEN),linux-musl)
 CFLAGS_FOR_TARGET := $(CFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cflags@ @cmodel@
 CXXFLAGS_FOR_TARGET := $(CXXFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cxxflags@ @cmodel@
 ASFLAGS_FOR_TARGET := $(ASFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @cmodel@
+LLVM_TARGET_ARCH := $(patsubst --with-arch=%,%,$(WITH_ARCH))
+LLVM_TARGET_ABI := $(patsubst --with-abi=%,%,$(WITH_ABI))
+LLVM_TARGET_TUNE := $(patsubst --with-tune=%,%,$(WITH_TUNE))
+# Clang does not support --with-isa-spec directly, so only forward arch/abi/tune.
+LLVM_TARGET_FLAGS := $(if $(LLVM_TARGET_ARCH),-march=$(LLVM_TARGET_ARCH)) \
+	$(if $(LLVM_TARGET_ABI),-mabi=$(LLVM_TARGET_ABI)) \
+	$(if $(LLVM_TARGET_TUNE),-mtune=$(LLVM_TARGET_TUNE))
+LLVM_CFLAGS_FOR_TARGET := $(strip $(LLVM_TARGET_FLAGS) $(CFLAGS_FOR_TARGET))
+LLVM_CXXFLAGS_FOR_TARGET := $(strip $(LLVM_TARGET_FLAGS) $(CXXFLAGS_FOR_TARGET))
 # --with-expat is required to enable XML support used by OpenOCD.
 BINUTILS_TARGET_FLAGS := --with-expat=yes $(BINUTILS_TARGET_FLAGS_EXTRA)
 BINUTILS_NATIVE_FLAGS := $(BINUTILS_NATIVE_FLAGS_EXTRA)
@@ -94,19 +190,37 @@ GDB_NATIVE_FLAGS := $(GDB_NATIVE_FLAGS_EXTRA)
 GLIBC_TARGET_FLAGS := $(GLIBC_TARGET_FLAGS_EXTRA)
 GLIBC_CC_FOR_TARGET ?= $(LINUX_TUPLE)-gcc
 GLIBC_CXX_FOR_TARGET ?= $(LINUX_TUPLE)-g++
-GLIBC_TARGET_BOARDS ?= $(shell echo "$(GLIBC_MULTILIB_NAMES)" | sed 's!\([_a-z0-9]*\)-\([_a-z0-9]*\)!riscv-sim/-march=\1/-mabi=\2/@cmodel@!g')
+GLIBC_TARGET_BOARDS ?= $(shell $(srcdir)/scripts/generate_target_board \
+  --sim-name riscv-sim \
+  --cmodel $(shell echo @cmodel@ | cut -d '=' -f2) \
+  --build-arch-abi "$(GLIBC_MULTILIB_NAMES)" \
+  --extra-test-arch-abi-flags-list "$(EXTRA_MULTILIB_TEST)")
 
+NEWLIB_TARGET_FLAGS := $(NEWLIB_TARGET_FLAGS_EXTRA)
 NEWLIB_CC_FOR_TARGET ?= $(NEWLIB_TUPLE)-gcc
 NEWLIB_CXX_FOR_TARGET ?= $(NEWLIB_TUPLE)-g++
-NEWLIB_TARGET_BOARDS ?= $(shell echo "$(NEWLIB_MULTILIB_NAMES)" | sed 's!\([_a-z0-9]*\)-\([_a-z0-9]*\)!riscv-sim/-march=\1/-mabi=\2/@cmodel@!g')
-NEWLIB_NANO_TARGET_BOARDS ?= $(shell echo "$(NEWLIB_MULTILIB_NAMES)" | sed 's!\([_a-z0-9]*\)-\([_a-z0-9]*\)!riscv-sim-nano/-march=\1/-mabi=\2/@cmodel@!g')
+NEWLIB_TARGET_BOARDS ?= $(shell $(srcdir)/scripts/generate_target_board \
+  --sim-name riscv-sim \
+  --cmodel $(shell echo @cmodel@ | cut -d '=' -f2) \
+  --build-arch-abi "$(NEWLIB_MULTILIB_NAMES)" \
+  --extra-test-arch-abi-flags-list "$(EXTRA_MULTILIB_TEST)")
+
+NEWLIB_NANO_TARGET_BOARDS ?= $(shell $(srcdir)/scripts/generate_target_board \
+  --sim-name riscv-sim-nano \
+  --cmodel $(shell echo @cmodel@ | cut -d '=' -f2) \
+  --build-arch-abi "$(NEWLIB_MULTILIB_NAMES)" \
+  --extra-test-arch-abi-flags-list "$(EXTRA_MULTILIB_TEST)")
 NEWLIB_CC_FOR_MULTILIB_INFO := $(NEWLIB_CC_FOR_TARGET)
 
 MUSL_TARGET_FLAGS := $(MUSL_TARGET_FLAGS_EXTRA)
 MUSL_CC_FOR_TARGET ?= $(MUSL_TUPLE)-gcc
 MUSL_CXX_FOR_TARGET ?= $(MUSL_TUPLE)-g++
 
+LLVM_CC_FOR_TARGET ?= $(INSTALL_DIR)/bin/clang
+LLVM_CXX_FOR_TARGET ?= $(INSTALL_DIR)/bin/clang++
+
 CONFIGURE_HOST   = @configure_host@
+PREPARATION_STAMP:=stamps/check-write-permission
 
 FIND_IGNORE = -not \( -name *.o -o -name *.py -o -name *.h -o -name *.specs -o -name *.def \)
 ifneq ($(findstring mingw,@with_host@),)
@@ -124,24 +238,28 @@ STRIP_CMD = @with_host@-strip
 endif
 
 all: @default_target@
+ifeq (@enable_host_gcc@,--enable-host-gcc)
+PREPARATION_STAMP+= stamps/install-host-gcc
+PATH := $(builddir)/install-host-gcc/bin:$(PATH)
+GCC_CHECKING_FLAGS := $(GCC_CHECKING_FLAGS) --enable-werror-always
+endif
 newlib: stamps/build-gcc-newlib-stage2
 linux: stamps/build-gcc-linux-stage2
-ifneq (,$(findstring riscv32,$(MUSL_TUPLE)))
-.PHONY: musl
-musl:
-	@echo "musl only supports 64bit builds." && exit 1
-else
 musl: stamps/build-gcc-musl-stage2
-endif
 ifeq (@enable_gdb@,--enable-gdb)
 newlib: stamps/build-gdb-newlib
 linux: stamps/build-gdb-linux
+musl: stamps/build-gdb-musl
 endif
 linux-native: stamps/build-gcc-linux-native
 ifeq (@enable_llvm@,--enable-llvm)
 all: stamps/build-llvm-@default_target@
 newlib: stamps/build-llvm-newlib
 linux: stamps/build-llvm-linux
+musl: stamps/build-llvm-musl
+ifeq (@multilib_flags@,--enable-multilib)
+$(error "Setting multilib flags for LLVM builds is not supported.")
+endif
 endif
 
 .PHONY: build-binutils build-gdb build-gcc1 build-libc build-gcc2 build-qemu build-llvm
@@ -202,14 +320,13 @@ report-gdb: report-gdb-@default_target@
 
 .PHONY: build-sim
 ifeq ($(SIM),qemu)
-QEMU_CPU=$(shell $(srcdir)/scripts/march-to-cpu-opt $(WITH_ARCH))
-SIM_PATH:=$(srcdir)/scripts/wrapper/qemu
-SIM_PREPARE:=PATH="$(SIM_PATH):$(INSTALL_DIR)/bin:$(PATH)" RISC_V_SYSROOT="$(SYSROOT)" QEMU_CPU="$(QEMU_CPU)"
+SIM_PATH:=$(srcdir)/scripts/wrapper/qemu:$(srcdir)/scripts
+SIM_PREPARE:=PATH="$(SIM_PATH):$(INSTALL_DIR)/bin:$(PATH)" RISC_V_SYSROOT="$(SYSROOT)"
 SIM_STAMP:= stamps/build-qemu
 else
 ifeq ($(SIM),spike)
 # Using spike simulator.
-SIM_PATH:=$(srcdir)/scripts/wrapper/spike
+SIM_PATH:=$(srcdir)/scripts/wrapper/spike:$(srcdir)/scripts
 SIM_PREPARE:=PATH="$(SIM_PATH):$(INSTALL_DIR)/bin:$(PATH)" PK_PATH="$(INSTALL_DIR)/$(NEWLIB_TUPLE)/bin/" ARCH_STR="$(WITH_ARCH)"
 SIM_STAMP:= stamps/build-spike
 ifneq (,$(findstring rv32,$(NEWLIB_MULTILIB_NAMES)))
@@ -297,8 +414,15 @@ endif
 
 ifeq ($(findstring $(srcdir),$(SPIKE_SRCDIR)),$(srcdir))
 SPIKE_SRC_GIT := $(SPIKE_SRCDIR)/.git
+PK_SRC_GIT := $(PK_SRCDIR)/.git
 else
 SPIKE_SRC_GIT :=
+endif
+
+ifeq ($(findstring $(srcdir),$(LLVM_SRCDIR)),$(srcdir))
+LLVM_SRC_GIT := $(LLVM_SRCDIR)/.git
+else
+LLVM_SRC_GIT :=
 endif
 
 ifeq ($(findstring $(srcdir),$(DEJAGNU_SRCDIR)),$(srcdir))
@@ -322,13 +446,27 @@ endif
 $(srcdir)/%/.git:
 	cd $(srcdir) && \
 	flock `git rev-parse --git-dir`/config git submodule init $(dir $@) && \
-	flock `git rev-parse --git-dir`/config git submodule update $(dir $@)
+	flock `git rev-parse --git-dir`/config git submodule update --progress --depth 1 $(dir $@)
+
+stamps/install-host-gcc: $(GCC_SRCDIR) $(GCC_SRC_GIT)
+	if test -f $</contrib/download_prerequisites && test "@NEED_GCC_EXTERNAL_LIBRARIES@" = "true"; then cd $< && ./contrib/download_prerequisites; fi
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(builddir)/install-host-gcc \
+		@with_system_zlib@ \
+		--enable-languages=c,c++ \
+		--disable-bootstrap \
+		--disable-multilib
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) $(INSTALL_TARGET)
+	mkdir -p $(dir $@) && touch $@
 
 #
 # GLIBC
 #
 
-stamps/build-binutils-linux: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/check-write-permission
+stamps/build-binutils-linux: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -355,7 +493,7 @@ ifeq (@enable_doc@,--enable-doc)
 endif
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-gdb-linux: $(GDB_SRCDIR) $(GDB_SRC_GIT)
+stamps/build-gdb-linux: $(GDB_SRCDIR) $(GDB_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -462,6 +600,7 @@ stamps/build-gcc-linux-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutil
 		--disable-nls \
 		--disable-bootstrap \
 		--src=$(gccsrcdir) \
+		$(ENABLE_DEFAULT_PIE) \
 		$(GCC_CHECKING_FLAGS) \
 		$(MULTILIB_FLAGS) \
 		$(WITH_ABI) \
@@ -472,11 +611,12 @@ stamps/build-gcc-linux-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutil
 		CFLAGS_FOR_TARGET="-O2 $(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="-O2 $(CXXFLAGS_FOR_TARGET)"
 	$(MAKE) -C $(notdir $@) inhibit-libc=true all-gcc
-	$(MAKE) -C $(notdir $@) inhibit-libc=true install-gcc
+	$(MAKE) -C $(notdir $@) inhibit-libc=true $(INSTALL_TARGET)-gcc
 	$(MAKE) -C $(notdir $@) inhibit-libc=true all-target-libgcc
 	$(MAKE) -C $(notdir $@) inhibit-libc=true install-target-libgcc
 	mkdir -p $(dir $@) && touch $@
 
+stamps/build-gcc-linux-stage2: ENABLED_LANGUAGES?="c,c++,fortran"
 stamps/build-gcc-linux-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) $(addprefix stamps/build-glibc-linux-,$(GLIBC_MULTILIB_NAMES)) \
                                stamps/build-glibc-linux-headers
 	rm -rf $@ $(notdir $@)
@@ -490,7 +630,7 @@ stamps/build-gcc-linux-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) $(addprefix stamps/b
 		@with_system_zlib@ \
 		--enable-shared \
 		--enable-tls \
-		--enable-languages=c,c++,fortran \
+		--enable-languages=$(ENABLED_LANGUAGES) \
 		--disable-libmudflap \
 		--disable-libssp \
 		--disable-libquadmath \
@@ -498,6 +638,7 @@ stamps/build-gcc-linux-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) $(addprefix stamps/b
 		--disable-nls \
 		--disable-bootstrap \
 		--src=$(gccsrcdir) \
+		$(ENABLE_DEFAULT_PIE) \
 		$(GCC_CHECKING_FLAGS) \
 		$(MULTILIB_FLAGS) \
 		$(WITH_ABI) \
@@ -515,7 +656,7 @@ endif
 	cp -a $(INSTALL_DIR)/$(LINUX_TUPLE)/lib* $(SYSROOT)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-binutils-linux-native: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/build-gcc-linux-stage2 stamps/check-write-permission
+stamps/build-binutils-linux-native: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/build-gcc-linux-stage2 $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -523,6 +664,7 @@ stamps/build-binutils-linux-native: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamp
 		--target=$(LINUX_TUPLE) \
 		$(CONFIGURE_HOST) \
 		--prefix=$(INSTALL_DIR)/native \
+		--enable-plugins \
 		$(MULTILIB_FLAGS) \
 		@with_guile@ \
 		--disable-werror \
@@ -532,6 +674,8 @@ stamps/build-binutils-linux-native: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamp
 		--disable-sim \
 		--disable-libdecnumber \
 		--disable-readline \
+		$(WITH_ABI) \
+		$(WITH_ARCH) \
 		$(WITH_ISA_SPEC)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
@@ -540,6 +684,8 @@ ifeq (@enable_doc@,--enable-doc)
 endif
 	mkdir -p $(dir $@) && touch $@
 
+
+stamps/build-gcc-linux-native: ENABLED_LANGUAGES?="c,c++,fortran"
 stamps/build-gcc-linux-native: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-gcc-linux-stage2 stamps/build-binutils-linux-native
 	if test -f $</contrib/download_prerequisites; then cd $< && ./contrib/download_prerequisites; fi
 	rm -rf $@ $(notdir $@)
@@ -552,7 +698,7 @@ stamps/build-gcc-linux-native: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-gcc-lin
 		--without-system-zlib \
 		--enable-shared \
 		--enable-tls \
-		--enable-languages=c,c++,fortran \
+		--enable-languages=$(ENABLED_LANGUAGES) \
 		--disable-libmudflap \
 		--disable-libssp \
 		--disable-libquadmath \
@@ -565,7 +711,7 @@ stamps/build-gcc-linux-native: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-gcc-lin
 		$(WITH_ARCH) \
 		$(WITH_TUNE) \
 		$(WITH_ISA_SPEC) \
-		$(GCC_EXTRA_CONFIGURE_FLAGS) \
+		$(GCC_EXTRA_CONFIGURE_FLAGS)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
 ifeq (@enable_doc@,--enable-doc)
@@ -578,7 +724,7 @@ endif
 # NEWLIB
 #
 
-stamps/build-binutils-newlib: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/check-write-permission
+stamps/build-binutils-newlib: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -602,7 +748,7 @@ ifeq (@enable_doc@,--enable-doc)
 endif
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-gdb-newlib: $(GDB_SRCDIR) $(GDB_SRC_GIT)
+stamps/build-gdb-newlib: $(GDB_SRCDIR) $(GDB_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -665,7 +811,7 @@ stamps/build-gcc-newlib-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binuti
 		CFLAGS_FOR_TARGET="-Os $(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="-Os $(CXXFLAGS_FOR_TARGET)"
 	$(MAKE) -C $(notdir $@) all-gcc
-	$(MAKE) -C $(notdir $@) install-gcc
+	$(MAKE) -C $(notdir $@) $(INSTALL_TARGET)-gcc
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-newlib: $(NEWLIB_SRCDIR) $(NEWLIB_SRC_GIT) stamps/build-gcc-newlib-stage1
@@ -680,7 +826,8 @@ stamps/build-newlib: $(NEWLIB_SRCDIR) $(NEWLIB_SRC_GIT) stamps/build-gcc-newlib-
 		--enable-newlib-io-c99-formats \
 		--enable-newlib-register-fini \
 		CFLAGS_FOR_TARGET="-O2 -D_POSIX_MODE -ffunction-sections -fdata-sections $(CFLAGS_FOR_TARGET)" \
-		CXXFLAGS_FOR_TARGET="-O2 -D_POSIX_MODE -ffunction-sections -fdata-sections $(CXXFLAGS_FOR_TARGET)"
+		CXXFLAGS_FOR_TARGET="-O2 -D_POSIX_MODE -ffunction-sections -fdata-sections $(CXXFLAGS_FOR_TARGET)" \
+		$(NEWLIB_TARGET_FLAGS)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
 ifeq (@enable_doc@,--enable-doc)
@@ -707,7 +854,8 @@ stamps/build-newlib-nano: $(NEWLIB_SRCDIR) $(NEWLIB_SRC_GIT) stamps/build-gcc-ne
 		--disable-newlib-supplied-syscalls \
 		--disable-nls \
 		CFLAGS_FOR_TARGET="-Os -ffunction-sections -fdata-sections $(CFLAGS_FOR_TARGET)" \
-		CXXFLAGS_FOR_TARGET="-Os -ffunction-sections -fdata-sections $(CXXFLAGS_FOR_TARGET)"
+		CXXFLAGS_FOR_TARGET="-Os -ffunction-sections -fdata-sections $(CXXFLAGS_FOR_TARGET)" \
+		$(NEWLIB_TARGET_FLAGS)
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
 	mkdir -p $(dir $@) && touch $@
@@ -740,6 +888,7 @@ stamps/merge-newlib-nano: stamps/build-newlib-nano stamps/build-newlib
 		$(INSTALL_DIR)/$(NEWLIB_TUPLE)/include/newlib-nano/newlib.h; \
 	mkdir -p $(dir $@) && touch $@
 
+stamps/build-gcc-newlib-stage2: ENABLED_LANGUAGES?="c,c++"
 stamps/build-gcc-newlib-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-newlib \
 		stamps/merge-newlib-nano
 	rm -rf $@ $(notdir $@)
@@ -750,7 +899,7 @@ stamps/build-gcc-newlib-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-newlib
 		--prefix=$(INSTALL_DIR) \
 		--disable-shared \
 		--disable-threads \
-		--enable-languages=c,c++ \
+		--enable-languages=$(ENABLED_LANGUAGES) \
 		--with-pkgversion="$(GCCPKGVER)" \
 		@with_system_zlib@ \
 		--enable-tls \
@@ -784,7 +933,7 @@ endif
 # MUSL
 #
 
-stamps/build-binutils-musl: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/check-write-permission
+stamps/build-binutils-musl: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -802,9 +951,35 @@ stamps/build-binutils-musl: $(BINUTILS_SRCDIR) $(BINUTILS_SRC_GIT) stamps/check-
 		--disable-sim \
 		--disable-libdecnumber \
 		--disable-readline \
+		$(WITH_ABI) \
+		$(WITH_ARCH) \
 		$(WITH_ISA_SPEC)
 	$(MAKE) -C $(notdir $@)
-	$(MAKE) -C $(notdir $@) install
+	$(MAKE) -C $(notdir $@) $(INSTALL_TARGET)
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-gdb-musl: $(GDB_SRCDIR) $(GDB_SRC_GIT) $(PREPARATION_STAMP)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+# CC_FOR_TARGET is required for the ld testsuite.
+	cd $(notdir $@) && CC_FOR_TARGET=$(MUSL_CC_FOR_TARGET) $</configure \
+		--target=$(MUSL_TUPLE) \
+		$(CONFIGURE_HOST) \
+		--prefix=$(INSTALL_DIR) \
+		--with-sysroot=$(SYSROOT) \
+		$(MULTILIB_FLAGS) \
+		@with_guile@ \
+		--disable-werror \
+		--disable-nls \
+		$(GDB_TARGET_FLAGS) \
+		--enable-gdb \
+		--disable-gas \
+		--disable-binutils \
+		--disable-ld \
+		--disable-gold \
+		--disable-gprof
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) $(INSTALL_TARGET)
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gcc-musl-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils-musl \
@@ -830,6 +1005,7 @@ stamps/build-gcc-musl-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils
 		--disable-nls \
 		--disable-bootstrap \
 		--src=$(gccsrcdir) \
+		$(ENABLE_DEFAULT_PIE) \
 		$(GCC_CHECKING_FLAGS) \
 		--disable-multilib \
 		$(WITH_ABI) \
@@ -840,7 +1016,7 @@ stamps/build-gcc-musl-stage1: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-binutils
 		CFLAGS_FOR_TARGET="-O2 $(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="-O2 $(CXXFLAGS_FOR_TARGET)"
 	$(MAKE) -C $(notdir $@) inhibit-libc=true all-gcc
-	$(MAKE) -C $(notdir $@) inhibit-libc=true install-gcc
+	$(MAKE) -C $(notdir $@) inhibit-libc=true $(INSTALL_TARGET)-gcc
 	$(MAKE) -C $(notdir $@) inhibit-libc=true all-target-libgcc
 	$(MAKE) -C $(notdir $@) inhibit-libc=true install-target-libgcc
 	mkdir -p $(dir $@) && touch $@
@@ -877,6 +1053,7 @@ stamps/build-musl-linux: $(MUSL_SRCDIR) $(MUSL_SRC_GIT) stamps/build-gcc-musl-st
 	+flock $(SYSROOT)/.lock $(MAKE) -C $(notdir $@) install
 	mkdir -p $(dir $@) && touch $@
 
+stamps/build-gcc-musl-stage2: ENABLED_LANGUAGES?="c,c++"
 stamps/build-gcc-musl-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-musl-linux \
                                stamps/build-musl-linux-headers
 	rm -rf $@ $(notdir $@)
@@ -891,7 +1068,7 @@ stamps/build-gcc-musl-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-musl-lin
 		@with_system_zlib@ \
 		--enable-shared \
 		--enable-tls \
-		--enable-languages=c,c++ \
+		--enable-languages=$(ENABLED_LANGUAGES) \
 		--disable-libmudflap \
 		--disable-libssp \
 		--disable-libquadmath \
@@ -899,6 +1076,7 @@ stamps/build-gcc-musl-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-musl-lin
 		--disable-nls \
 		--disable-bootstrap \
 		--src=$(gccsrcdir) \
+		$(ENABLE_DEFAULT_PIE) \
 		$(GCC_CHECKING_FLAGS) \
 		--disable-multilib \
 		$(WITH_ABI) \
@@ -909,11 +1087,12 @@ stamps/build-gcc-musl-stage2: $(GCC_SRCDIR) $(GCC_SRC_GIT) stamps/build-musl-lin
 		CFLAGS_FOR_TARGET="-O2 $(CFLAGS_FOR_TARGET)" \
 		CXXFLAGS_FOR_TARGET="-O2 $(CXXFLAGS_FOR_TARGET)"
 	$(MAKE) -C $(notdir $@)
-	$(MAKE) -C $(notdir $@) install
+	$(MAKE) -C $(notdir $@) $(INSTALL_TARGET)
 	cp -a $(INSTALL_DIR)/$(MUSL_TUPLE)/lib* $(SYSROOT)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-spike: $(SPIKE_SRCDIR) $(SPIKE_SRC_GIT)
+
+stamps/build-spike: $(SPIKE_SRCDIR) $(SPIKE_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -923,38 +1102,40 @@ stamps/build-spike: $(SPIKE_SRCDIR) $(SPIKE_SRC_GIT)
 	mkdir -p $(dir $@)
 	date > $@
 
-stamps/build-pk32: $(PK_SRCDIR) stamps/build-gcc-newlib-stage2
+stamps/build-pk32: $(PK_SRCDIR) $(PK_SRC_GIT) stamps/build-gcc-newlib-stage2
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
 		--prefix=$(INSTALL_DIR) \
 		--host=$(NEWLIB_TUPLE) \
-		--with-arch=rv32imafdc \
+		--with-arch=rv32gc \
 		--with-abi=ilp32f
 	$(MAKE) -C $(notdir $@)
 	cp $(notdir $@)/pk $(INSTALL_DIR)/$(NEWLIB_TUPLE)/bin/pk32
 	mkdir -p $(dir $@)
 	date > $@
 
-stamps/build-pk64: $(PK_SRCDIR) stamps/build-gcc-newlib-stage2
+stamps/build-pk64: $(PK_SRCDIR) $(PK_SRC_GIT) stamps/build-gcc-newlib-stage2
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
 		--prefix=$(INSTALL_DIR) \
 		--host=$(NEWLIB_TUPLE) \
-		--with-arch=rv64gc
+		--with-arch=rv64gc \
+		--with-abi=lp64d
 	$(MAKE) -C $(notdir $@)
 	cp $(notdir $@)/pk $(INSTALL_DIR)/$(NEWLIB_TUPLE)/bin/pk64
 	mkdir -p $(dir $@)
 	date > $@
 
-stamps/build-qemu: $(QEMU_SRCDIR) $(QEMU_SRC_GIT)
+stamps/build-qemu: $(QEMU_SRCDIR) $(QEMU_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
 		--prefix=$(INSTALL_DIR) \
 		--target-list=$(QEMU_TARGETS) \
 		--interp-prefix=$(INSTALL_DIR)/sysroot \
+		$(QEMU_EXTRA_CONFIGURE_FLAGS) \
 		--python=python3
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
@@ -1051,7 +1232,7 @@ endif
 	cd $(INSTALL_DIR)/bin && ln -sf clang++$(EXE_SUFFIX) $(NEWLIB_TUPLE)-clang++$(EXE_SUFFIX)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-dejagnu: $(DEJAGNU_SRCDIR) $(DEJAGNU_SRC_GIT)
+stamps/build-dejagnu: $(DEJAGNU_SRCDIR) $(DEJAGNU_SRC_GIT) $(PREPARATION_STAMP)
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -1076,7 +1257,8 @@ stamps/check-gcc-linux: stamps/build-gcc-linux-stage2 $(SIM_STAMP) stamps/build-
 	mkdir -p $(dir $@)
 	date > $@
 
-stamps/check-glibc-linux-%: $(addprefix stamps/build-glibc-linux-,$(GLIBC_MULTILIB_NAMES))
+stamps/check-glibc-linux-%: stamps/build-gcc-linux-stage2 $(SIM_STAMP) stamps/build-dejagnu \
+		$(addprefix stamps/build-glibc-linux-,$(GLIBC_MULTILIB_NAMES))
 	$(eval $@_BUILD_DIR := $(notdir $@))
 	$(eval $@_BUILD_DIR := $(subst check-,build-,$($@_BUILD_DIR)))
 	$(SIM_PREPARE) $(MAKE) -C $($@_BUILD_DIR) check
@@ -1180,7 +1362,7 @@ report-binutils-linux: stamps/check-binutils-linux
 	    `find build-binutils-linux/ -name *.sum |paste -sd "," -`
 
 clean:
-	rm -rf build-* stamps install-newlib-nano
+	rm -rf build-* install-* stamps
 
 .PHONY: report-gdb-newlib report-gdb-newlib-nano
 report-gdb-newlib: stamps/check-gdb-newlib
@@ -1203,7 +1385,7 @@ report-gdb-linux: stamps/check-gdb-linux
 	if find build-gdb-linux -iname '*.sum' | xargs grep ^FAIL | sort | grep -F -v $(patsubst %,--file=$(srcdir)/test/gdb-linux/%.log,$(GLIBC_MULTILIB_NAMES)); then false; else true; fi
 
 distclean: clean
-	rm -rf src
+    rm -rf src
 
 # All of the packages install themselves, so our install target does nothing.
 install:

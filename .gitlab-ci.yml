@@ -104,7 +104,7 @@ prepare_source:
   tags:
     - env::docker
     - build::toolchain
-    - host::whss4
+    - host::whss9
 
 ## Job template
 .build_job_template: &build_job_template_default
@@ -175,7 +175,7 @@ prepare_source:
   tags:
     - env::docker
     - build::toolchain
-    - host::whss4
+    - host::whss9
 
 ## Job for build linux host toolchain
 build_linux:
@@ -317,7 +317,7 @@ test_toolchain_report:
   tags:
     - env::docker
     - build::toolchain
-    - host::whss4
+    - host::whss9
 
 # clean up build directories and build installed toolchains
 cleanbuild:
@@ -342,7 +342,7 @@ cleanbuild:
     - CLEANINSTALL=1 ./scripts/toolchain/cleanup.sh
   tags:
     - env::docker
-    - host::whss4
+    - host::whss9
 
 ## Job for deploy document to internal server
 release:
@@ -374,4 +374,4 @@ release:
     - ./scripts/toolchain/release.sh
   tags:
     - env::shell
-    - host::whss4
+    - host::whss9

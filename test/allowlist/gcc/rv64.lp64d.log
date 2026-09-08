@@ -592,11 +592,6 @@ FAIL: g++.dg/modules/bad-mapper-3.C
 # missing TARGET_XXLCZBITOP; extract uses unspec, no standard pattern match)
 FAIL: gcc.target/riscv/xxlcz-bitmanip-rv64.c
 UNRESOLVED: gcc.target/riscv/xxlcz-bitmanip-rv64.c
-# zfbfmin: df->bf conversion path differs (nuclei xxlfbf truncdfbf2 affects
-# standard zfbfmin libcall path), call __truncdfsf2 + fcvt.bf16.s not generated
-FAIL: gcc.target/riscv/zfbfmin-bf16_float_libcall_convert.c
-# movqi-1: stack offset/instruction differs from gcc-16 expectation (sw zero,12(sp))
-FAIL: gcc.target/riscv/rvv/base/movqi-1.c
 # --- rv64imafd_zca_..._xxldsp march additional failures ---
 # zcmp enabled: cm.push/cm.pop replaces __riscv_save/restore libcall
 FAIL: gcc.target/riscv/save-restore-2.c

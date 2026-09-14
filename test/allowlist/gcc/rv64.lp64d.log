@@ -588,10 +588,6 @@ FAIL: g++.target/riscv/redundant-bitmap-2.C
 FAIL: g++.target/riscv/redundant-bitmap-3.C
 FAIL: g++.target/riscv/redundant-bitmap-4.C
 FAIL: g++.dg/modules/bad-mapper-3.C
-# gcc-14 xxlczbitop: extract/extractu/ff1/fl1 not generated (clzsi2/ctzsi2 gate
-# missing TARGET_XXLCZBITOP; extract uses unspec, no standard pattern match)
-FAIL: gcc.target/riscv/xxlcz-bitmanip-rv64.c
-UNRESOLVED: gcc.target/riscv/xxlcz-bitmanip-rv64.c
 # --- rv64imafd_zca_..._xxldsp march additional failures ---
 # zcmp enabled: cm.push/cm.pop replaces __riscv_save/restore libcall
 FAIL: gcc.target/riscv/save-restore-2.c

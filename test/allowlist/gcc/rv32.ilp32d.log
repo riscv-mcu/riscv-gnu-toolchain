@@ -622,12 +622,6 @@ UNRESOLVED: gcc.target/riscv/shorten-memrefs-5.c
 UNRESOLVED: gcc.target/riscv/shorten-memrefs-8.c
 UNRESOLVED: g++.dg/vect/pr115278.cc
 FAIL: g++.dg/modules/bad-mapper-3.C
-# gcc-14 xxlczbitop: extract/extractu/ff1/fl1 not generated (clzsi2/ctzsi2 gate
-# missing TARGET_XXLCZBITOP; extract uses unspec, no standard pattern match)
-FAIL: gcc.target/riscv/xxlcz-bitmanip.c
-# gcc-14 xxlczbitop: xl.extract/extractu not generated (extract uses unspec,
-# no standard (and (lshiftrt) mask) pattern match), same as bitmanip.c
-FAIL: gcc.target/riscv/xxlcz-bitop.c
 # --- additional failures for rv32imafd_zca_..._xxldspn3x march ---
 # zcmp enabled: cm.push/cm.pop replaces __riscv_save/restore libcall
 FAIL: gcc.target/riscv/save-restore-2.c

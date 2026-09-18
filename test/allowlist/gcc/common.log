@@ -20,6 +20,12 @@ FAIL: gcc.dg/vect/pr88598-3.c
 FAIL: gcc.target/riscv/rvv/autovec/pr113206-1.c
 FAIL: gcc.target/riscv/rvv/autovec/pr113206-2.c
 FAIL: gcc.target/riscv/rvv/vsetvl/pr117974.c
+# Nuclei toolchain keeps --with-isa-spec=2.2 as default, where bare "i"
+# does not imply zicsr, so .attribute arch has no zicsr part.  arch-57/58
+# come from upstream master, whose extension-info framework adds zicsr
+# for bare "i" under ISA spec >= 20191213.
+FAIL: gcc.target/riscv/arch-57.c
+FAIL: gcc.target/riscv/arch-58.c
 UNRESOLVED: gcc.target/riscv/pr122675-1.c
 UNRESOLVED: gcc.target/riscv/rvv/autovec/pr120378-2.c
 UNRESOLVED: gcc.target/riscv/rvv/autovec/pr120378-3.c

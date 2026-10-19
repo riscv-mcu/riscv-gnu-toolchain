@@ -49,7 +49,7 @@ prepare_source:
   variables:
     # develop branch is used to track latest working version
     # master branch is used to track latest release version
-    libncrtbranch: master
+    libncrtbranch: develop
   script:
     - free -g
     - command -v ssh-agent >/dev/null

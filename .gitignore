@@ -16,3 +16,5 @@ libncrt*
 *.log
 logs/
 log/
+# local scratch area for temporary test, never commit
+/SCRATCH/

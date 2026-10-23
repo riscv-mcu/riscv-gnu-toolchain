@@ -263,4 +263,8 @@ else
     echo "ERROR: Toolchain build failing, see build artifacts in the install directory in $toolprefix"
 fi
 
+# show installed toolchain version and repo information, one can know which
+# toolchain version is built from the end of the build log
+show_toolchain_version
+
 exit $dosuc

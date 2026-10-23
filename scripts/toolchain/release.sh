@@ -26,6 +26,11 @@ echo "INFO: Doing sync toolchain in 3 seconds..."
 sleep 3
 if sync_toolchain $toolloc $symlink ; then
     echo "INFO: Sync toolchain done!"
+    # show released toolchain version and repo information,
+    # see it from the end of the release log
+    # toolloc is the toolchain basedir, toolchain binaries and gitrepo.txt
+    # are installed in the <TOOLNAME>(gcc) subdirectory
+    show_toolchain_version $toolloc/gcc/bin $toolloc/gcc/gitrepo.txt
     exit 0
 else
     echo "ERROR: Sync toolchain failed!"

@@ -555,6 +555,51 @@ function show_toolchain() {
     ls -lh ${basedir}
 }
 
+function show_toolchain_version() {
+    local tooldir=${1:-${toolprefix}/bin}
+    local repodesc=${2:-${toolprefix}/gitrepo.txt}
+
+    if [ ! -d "$tooldir" ] ; then
+        echo "WARN: Toolchain bin directory $tooldir not exist, can't show toolchain version!"
+        return 0
+    fi
+
+    echo "INFO: Show toolchain versions installed in $tooldir"
+    # toolchain binaries such as gcc/ld/gdb are named with target prefix
+    # such as riscv64-unknown-elf-gcc, while clang usually is named as clang,
+    # so check prefixed name first, then fallback to plain name
+    for tool in gcc clang ld gdb ; do
+        local found=""
+        for cand in ${tooldir}/*-${tool} ${tooldir}/${tool} ; do
+            if [ -x "$cand" ] && [ ! -d "$cand" ] ; then
+                found="$cand"
+                break
+            fi
+        done
+        if [ "x$found" != "x" ] ; then
+            echo "### $(basename $found) --version ###"
+            if "$found" --version 2>&1 ; then
+                echo
+            elif which wine > /dev/null 2>&1 ; then
+                # windows executable on linux host, try to run it with wine
+                echo "### wine $(basename $found) --version ###"
+                wine "$found" --version 2>&1
+            else
+                echo "WARN: $(basename $found) cannot be executed on this host, skip!"
+            fi
+        else
+            echo "WARN: ${tool} not found in $tooldir, skip!"
+        fi
+    done
+
+    if [ -f "$repodesc" ] ; then
+        echo "### $(basename $repodesc) ###"
+        cat "$repodesc"
+    else
+        echo "WARN: Repo description file $repodesc not exist, skip!"
+    fi
+}
+
 function sync_toolchain() {
     local localinstall=${1:-${toolbasedir}}
     local symlink=${2:-}

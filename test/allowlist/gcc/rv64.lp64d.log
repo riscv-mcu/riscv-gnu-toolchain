@@ -601,6 +601,11 @@ FAIL: gcc.target/riscv/pr116085.c
 FAIL: gcc.target/riscv/pr113095.c
 UNRESOLVED: gcc.target/riscv/pr113095.c
 UNRESOLVED: gcc.target/riscv/pr116085.c
+# pr117690: compilation failed (march combination issue, like pr116085/pr113095;
+# dg-do run test pins its own -march=rv64gc_zba_zbb, added by gcc bump
+# "Add missing shift in constant synthesis")
+FAIL: gcc.target/riscv/pr117690.c
+UNRESOLVED: gcc.target/riscv/pr117690.c
 # execution failures: spike "illegal instruction" (xxldsp auto-match generates
 # nuclei DSP instructions that spike doesn't recognize)
 FAIL: c-c++-common/torture/vector-compare-2.c

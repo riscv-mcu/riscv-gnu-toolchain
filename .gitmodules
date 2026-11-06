@@ -5,7 +5,7 @@
 [submodule "gcc"]
 	path = gcc
 	url = ../riscv-gcc
-	branch = nuclei/14.x
+	branch = nuclei/gcc14.x
 [submodule "glibc"]
 	path = glibc
 	url = ../riscv-glibc
@@ -33,11 +33,11 @@
 [submodule "spike"]
 	path = spike
 	url = ../riscv-isa-sim
-	branch = master
+	branch = nuclei/spike-testsuite
 [submodule "pk"]
 	path = pk
 	url = ../riscv-pk
-	branch = master
+	branch = nuclei/pk-testsuite
 [submodule "llvm"]
 	path = llvm
 	url = ../llvm-project

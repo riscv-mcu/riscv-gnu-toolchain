@@ -237,6 +237,20 @@ FIND_STRIP_FILES = find $$chkdir -type f $(FIND_IGNORE) | xargs file | grep "not
 STRIP_CMD = @with_host@-strip
 endif
 
+# For cross builds (mingw host) the LLVM build creates a NATIVE sub-build for
+# the host tools, and every host tool gets its own custom command running
+# $(MAKE) -C NATIVE.  Under a parallel top-level make these sub-makes overlap:
+# they rebuild the same sources and relink the same binaries while tablegen
+# jobs already execute them, which fails intermittently (e.g. "Permission
+# denied", the linker only adds the execute bit after writing the binary).
+# Pre-build the host tools serially so the main parallel build finds them
+# up to date and never relinks them.
+ifeq ($(findstring mingw,@with_host@),)
+LLVM_NATIVE_TOOLS_PREBUILD =
+else
+LLVM_NATIVE_TOOLS_PREBUILD = NativeLLVMConfig llvm-min-tblgen-host clang-tblgen-host
+endif
+
 all: @default_target@
 ifeq (@enable_host_gcc@,--enable-host-gcc)
 PREPARATION_STAMP+= stamps/install-host-gcc
@@ -1215,6 +1229,11 @@ stamps/build-llvm-newlib: $(LLVM_SRCDIR) $(LLVM_SRC_GIT) \
 	   -DLLVM_ENABLE_PIC=OFF \
 	   -DLLVM_DEFAULT_TARGET_TRIPLE="$(NEWLIB_TUPLE)" \
 	   -DCMAKE_BUILD_TYPE=Release
+ifneq ($(LLVM_NATIVE_TOOLS_PREBUILD),)
+	for t in $(LLVM_NATIVE_TOOLS_PREBUILD); do \
+		$(MAKE) -C $(notdir $@) $$t || exit 1; \
+	done
+endif
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
 ifeq (@enable_doc@,--enable-doc)
